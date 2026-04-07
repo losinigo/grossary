@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ScanBarcode } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import BarcodeScanner from '../../components/BarcodeScanner'
 import './Forms.css'
 
 const categories = ['Dairy', 'Meat', 'Produce', 'Bakery', 'Beverages', 'Snacks', 'Frozen', 'Canned Goods', 'Condiments', 'Household', 'Personal Care', 'Other']
@@ -14,8 +15,14 @@ export default function AddItem() {
   const [brand, setBrand] = useState('')
   const [barcode, setBarcode] = useState('')
   const [category, setCategory] = useState('')
+  const [scanning, setScanning] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const handleScan = useCallback((code) => {
+    setBarcode(code)
+    setScanning(false)
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -60,7 +67,12 @@ export default function AddItem() {
 
         <label className="form-label">
           Barcode
-          <input className="form-input" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Scan or type barcode number" />
+          <div className="input-with-action">
+            <input className="form-input" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Scan or type barcode number" />
+            <button type="button" className="input-action-btn" onClick={() => setScanning(true)}>
+              <ScanBarcode size={20} />
+            </button>
+          </div>
         </label>
 
         <label className="form-label">
@@ -77,6 +89,8 @@ export default function AddItem() {
           {submitting ? 'Adding...' : 'Add Item'}
         </button>
       </form>
+
+      {scanning && <BarcodeScanner onScan={handleScan} onClose={() => setScanning(false)} />}
     </div>
   )
 }

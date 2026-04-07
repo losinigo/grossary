@@ -58,3 +58,81 @@
   line-height: 1.5;
   max-width: 280px;
 }
+
+.search-status {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--color-gray-500);
+  font-size: 0.9rem;
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.result-card {
+  background: #fff;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.result-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: block;
+}
+
+.result-brand {
+  font-size: 0.78rem;
+  color: var(--color-gray-500);
+}
+
+.result-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-green);
+  white-space: nowrap;
+}
+
+.result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.result-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+}
+
+.result-meta-item.confirmed {
+  color: var(--color-green);
+  font-weight: 500;
+}
+
+.result-unavailable {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-red);
+  background: #fff0f0;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
