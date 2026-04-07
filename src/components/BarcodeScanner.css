@@ -43,13 +43,23 @@
   background: var(--color-gray-100);
 }
 
-#barcode-reader {
+.scanner-viewport {
+  position: relative;
   width: 100%;
+  overflow: hidden;
 }
 
-#barcode-reader video {
+.scanner-viewport video,
+.scanner-viewport canvas {
   width: 100% !important;
-  border-radius: 0 !important;
+  height: auto !important;
+  display: block;
+}
+
+.scanner-viewport canvas.drawingBuffer {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .scanner-hint {

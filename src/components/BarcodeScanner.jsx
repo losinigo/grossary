@@ -1,32 +1,63 @@
-import { useEffect, useRef } from 'react'
-import { Html5Qrcode } from 'html5-qrcode'
+import { useEffect, useRef, useCallback } from 'react'
+import Quagga from '@ericblade/quagga2'
 import { X } from 'lucide-react'
 import './BarcodeScanner.css'
 
 export default function BarcodeScanner({ onScan, onClose }) {
   const scannerRef = useRef(null)
-  const containerRef = useRef(null)
+  const detectedRef = useRef(false)
+
+  const handleDetected = useCallback((result) => {
+    if (detectedRef.current) return
+    const code = result?.codeResult?.code
+    if (!code) return
+    detectedRef.current = true
+    Quagga.stop()
+    onScan(code)
+  }, [onScan])
 
   useEffect(() => {
-    const scanner = new Html5Qrcode('barcode-reader')
-    scannerRef.current = scanner
-
-    scanner.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 250, height: 150 } },
-      (decodedText) => {
-        scanner.stop().catch(() => {})
-        onScan(decodedText)
+    Quagga.init(
+      {
+        inputStream: {
+          type: 'LiveStream',
+          target: scannerRef.current,
+          constraints: {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        },
+        decoder: {
+          readers: [
+            'ean_reader',
+            'ean_8_reader',
+            'upc_reader',
+            'upc_e_reader',
+            'code_128_reader',
+            'code_39_reader',
+          ],
+        },
+        locate: true,
+        frequency: 15,
       },
-      () => {},
-    ).catch(() => {
-      onClose()
-    })
+      (err) => {
+        if (err) {
+          console.error('Quagga init error:', err)
+          onClose()
+          return
+        }
+        Quagga.start()
+      },
+    )
+
+    Quagga.onDetected(handleDetected)
 
     return () => {
-      scanner.stop().catch(() => {})
+      Quagga.offDetected(handleDetected)
+      Quagga.stop()
     }
-  }, [onScan, onClose])
+  }, [handleDetected, onClose])
 
   return (
     <div className="scanner-overlay">
@@ -37,7 +68,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
             <X size={20} />
           </button>
         </div>
-        <div id="barcode-reader" ref={containerRef} />
+        <div className="scanner-viewport" ref={scannerRef} />
         <p className="scanner-hint">Point your camera at a barcode</p>
       </div>
     </div>

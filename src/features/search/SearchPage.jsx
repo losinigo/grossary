@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import { Search, ScanBarcode, MapPin, Clock, Users } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -10,15 +10,16 @@ export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [scanning, setScanning] = useState(false)
   const [coords, setCoords] = useState(null)
+  const coordsRef = useRef(null)
 
-  // Get user location on first search
   const requestLocation = () => {
     return new Promise((resolve) => {
-      if (coords) return resolve(coords)
+      if (coordsRef.current) return resolve(coordsRef.current)
       if (!navigator.geolocation) return resolve(null)
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const c = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+          coordsRef.current = c
           setCoords(c)
           resolve(c)
         },
@@ -30,35 +31,38 @@ export default function SearchPage() {
   const { data: results, isLoading } = useQuery({
     queryKey: ['search', searchTerm, coords?.lat, coords?.lng],
     queryFn: async () => {
-      if (coords) {
+      const loc = coordsRef.current
+      if (loc) {
         const { data } = await supabase.rpc('search_products_nearby', {
           search_term: searchTerm,
-          user_lat: coords.lat,
-          user_lon: coords.lng,
+          user_lat: loc.lat,
+          user_lon: loc.lng,
           radius_km: 25,
         })
         return data || []
       }
-      // Fallback: search products without location
       const { data } = await supabase.rpc('search_products', { search_term: searchTerm })
       return (data || []).map((p) => ({ ...p, product_id: p.id, product_name: p.name }))
     },
     enabled: searchTerm.length > 0,
   })
 
-  const handleSearch = async (e) => {
-    e?.preventDefault()
-    if (!query.trim()) return
+  const doSearch = async (term) => {
+    if (!term.trim()) return
     await requestLocation()
-    setSearchTerm(query.trim())
+    setSearchTerm(term.trim())
   }
 
-  const handleScan = useCallback(async (code) => {
+  const handleSearch = (e) => {
+    e?.preventDefault()
+    doSearch(query)
+  }
+
+  const handleScan = (code) => {
     setScanning(false)
     setQuery(code)
-    await requestLocation()
-    setSearchTerm(code)
-  }, [coords])
+    doSearch(code)
+  }
 
   const timeAgo = (date) => {
     const diff = Date.now() - new Date(date).getTime()
