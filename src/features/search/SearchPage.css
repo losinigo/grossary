@@ -143,3 +143,29 @@
   padding: 3px 8px;
   border-radius: var(--radius-full);
 }
+
+.result-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.contributor-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.contributor-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-gray-200);
+  color: var(--color-gray-400);
+}

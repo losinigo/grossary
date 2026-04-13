@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ScanBarcode, MapPin, Clock, Users, PlusCircle } from 'lucide-react'
+import { Search, ScanBarcode, MapPin, Clock, Users, PlusCircle, User } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import BarcodeScanner from '../../components/BarcodeScanner'
@@ -135,18 +135,30 @@ export default function SearchPage() {
                     <MapPin size={13} /> {r.store_name}
                     {r.distance_km != null && ` · ${r.distance_km} km`}
                   </span>
-                  {r.price_updated_at && (
-                    <span className="result-meta-item">
-                      <Clock size={13} /> {timeAgo(r.price_updated_at)}
-                    </span>
-                  )}
-                  {r.confirmation_count > 0 && (
-                    <span className="result-meta-item confirmed">
-                      <Users size={13} /> {r.confirmation_count} confirmed
-                    </span>
-                  )}
                 </div>
               )}
+              <div className="result-footer">
+                {r.contributor_name && (
+                  <span className="result-meta-item">
+                    {r.contributor_avatar_url ? (
+                      <img src={r.contributor_avatar_url} alt="" className="contributor-avatar" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="contributor-avatar-fallback"><User size={10} /></div>
+                    )}
+                    {r.contributor_name}
+                  </span>
+                )}
+                {r.price_updated_at && (
+                  <span className="result-meta-item">
+                    <Clock size={13} /> {timeAgo(r.price_updated_at)}
+                  </span>
+                )}
+                {r.confirmation_count >= 0 && (
+                  <span className="result-meta-item confirmed">
+                    <Users size={13} /> {r.confirmation_count} confirmed
+                  </span>
+                )}
+              </div>
               {r.is_available === false && <span className="result-unavailable">Marked unavailable</span>}
             </div>
           ))}

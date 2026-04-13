@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { User, TrendingUp, CheckCircle, Clock, LogOut, ChevronRight } from 'lucide-react'
+import { User, TrendingUp, CheckCircle, Clock, LogOut } from 'lucide-react'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -43,7 +43,7 @@ export default function ProfilePage() {
 
   const meta = user.user_metadata
   const stats = [
-    { icon: TrendingUp, label: 'Reputation', value: profile?.reputation_score ?? 0 },
+    { icon: TrendingUp, label: 'Reputation', value: profile?.reputation_score ?? 0, link: '/profile/contributions' },
     { icon: CheckCircle, label: 'Member since', value: new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) },
     { icon: Clock, label: 'Last sign in', value: new Date(user.last_sign_in_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) },
   ]
@@ -60,18 +60,14 @@ export default function ProfilePage() {
         <p className="profile-email">{user.email}</p>
       </div>
       <div className="stats-grid">
-        {stats.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="stat-card">
+        {stats.map(({ icon: Icon, label, value, link }) => (
+          <div key={label} className={`stat-card${link ? ' stat-card-link' : ''}`} onClick={link ? () => navigate(link) : undefined}>
             <Icon size={18} color="var(--color-primary)" />
             <span className="stat-value">{value}</span>
             <span className="stat-label">{label}</span>
           </div>
         ))}
       </div>
-      <button className="contributions-link" onClick={() => navigate('/profile/contributions')}>
-        <span>My Contributions</span>
-        <ChevronRight size={18} color="var(--color-gray-400)" />
-      </button>
       <button className="btn-signout" onClick={signOut}>
         <LogOut size={16} />
         Sign Out

@@ -97,6 +97,7 @@ select distinct on (product_id, store_id)
   p.is_available,
   p.created_at,
   pr.display_name as contributor_name,
+  pr.avatar_url as contributor_avatar_url,
   (
     select count(*) filter (where c.confirmed = true)
     from confirmations c
@@ -197,6 +198,7 @@ returns table (
   is_available boolean,
   price_updated_at timestamptz,
   contributor_name text,
+  contributor_avatar_url text,
   confirmation_count bigint,
   distance_km double precision
 )
@@ -214,6 +216,7 @@ as $$
     cp.is_available,
     cp.created_at as price_updated_at,
     cp.contributor_name,
+    cp.contributor_avatar_url,
     cp.confirmation_count,
     ns.distance_km
   from current_prices cp
