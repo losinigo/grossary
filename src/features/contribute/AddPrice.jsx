@@ -10,6 +10,7 @@ export default function AddPrice() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [productId, setProductId] = useState('')
+  const [productDisplay, setProductDisplay] = useState('')
   const [storeId, setStoreId] = useState('')
   const [price, setPrice] = useState('')
   const [productSearch, setProductSearch] = useState('')
@@ -37,8 +38,6 @@ export default function AddPrice() {
       return data || []
     },
   })
-
-  const selectedProduct = products?.find((p) => p.id === productId)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -75,8 +74,8 @@ export default function AddPrice() {
           Search Product *
           <input
             className="form-input"
-            value={selectedProduct ? `${selectedProduct.name}${selectedProduct.brand ? ` (${selectedProduct.brand})` : ''}` : productSearch}
-            onChange={(e) => { setProductSearch(e.target.value); setProductId('') }}
+            value={productId ? productDisplay : productSearch}
+            onChange={(e) => { setProductSearch(e.target.value); setProductId(''); setProductDisplay('') }}
             placeholder="Search by name, brand, or barcode"
           />
         </label>
@@ -84,7 +83,7 @@ export default function AddPrice() {
         {products?.length > 0 && !productId && (
           <div className="dropdown">
             {products.map((p) => (
-              <button key={p.id} type="button" className="dropdown-item" onClick={() => { setProductId(p.id); setProductSearch('') }}>
+              <button key={p.id} type="button" className="dropdown-item" onClick={() => { setProductId(p.id); setProductDisplay(`${p.name}${p.brand ? ` (${p.brand})` : ''}`); setProductSearch('') }}>
                 {p.name} {p.brand && <span className="text-muted">— {p.brand}</span>}
               </button>
             ))}

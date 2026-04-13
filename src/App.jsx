@@ -9,6 +9,7 @@ import AddItem from './features/contribute/AddItem'
 import AddPrice from './features/contribute/AddPrice'
 import StoresPage from './features/stores/StoresPage'
 import ProfilePage from './features/profile/ProfilePage'
+import ContributionsPage from './features/profile/ContributionsPage'
 
 const queryClient = new QueryClient()
 
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="contribute/price" element={<AddPrice />} />
               <Route path="stores" element={<StoresPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="profile/contributions" element={<ContributionsPage />} />
             </Route>
           </Routes>
         </HashRouter>

@@ -1,4 +1,5 @@
-import { User, TrendingUp, CheckCircle, Clock, LogOut } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { User, TrendingUp, CheckCircle, Clock, LogOut, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -6,6 +7,7 @@ import './ProfilePage.css'
 
 export default function ProfilePage() {
   const { user, loading, signInWithGoogle, signOut } = useAuth()
+  const navigate = useNavigate()
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -66,6 +68,10 @@ export default function ProfilePage() {
           </div>
         ))}
       </div>
+      <button className="contributions-link" onClick={() => navigate('/profile/contributions')}>
+        <span>My Contributions</span>
+        <ChevronRight size={18} color="var(--color-gray-400)" />
+      </button>
       <button className="btn-signout" onClick={signOut}>
         <LogOut size={16} />
         Sign Out

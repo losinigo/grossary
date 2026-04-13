@@ -6,7 +6,6 @@ import { useAuth } from '../../lib/hooks/useAuth'
 import BarcodeScanner from '../../components/BarcodeScanner'
 import './Forms.css'
 
-const categories = ['Dairy', 'Meat', 'Produce', 'Bakery', 'Beverages', 'Snacks', 'Frozen', 'Canned Goods', 'Condiments', 'Household', 'Personal Care', 'Other']
 
 export default function AddItem() {
   const { user } = useAuth()
@@ -15,7 +14,6 @@ export default function AddItem() {
   const [name, setName] = useState('')
   const [brand, setBrand] = useState('')
   const [barcode, setBarcode] = useState(location.state?.barcode || '')
-  const [category, setCategory] = useState('')
   const [scanning, setScanning] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -35,7 +33,6 @@ export default function AddItem() {
       name: name.trim(),
       brand: brand.trim() || null,
       barcode: barcode.trim() || null,
-      category: category || null,
       created_by: user.id,
     })
 
@@ -74,14 +71,6 @@ export default function AddItem() {
               <ScanBarcode size={20} />
             </button>
           </div>
-        </label>
-
-        <label className="form-label">
-          Category
-          <select className="form-input" value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">Select category</option>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
         </label>
 
         {error && <p className="form-error">{error}</p>}

@@ -249,6 +249,28 @@ create or replace trigger on_confirmation_added
   after insert on public.confirmations
   for each row execute function increment_reputation();
 
+-- Increment reputation for product additions
+create or replace function increment_reputation_created_by()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  update public.profiles
+  set reputation_score = reputation_score + 1
+  where id = new.created_by;
+  return new;
+end;
+$$;
+
+create or replace trigger on_product_added
+  after insert on public.products
+  for each row execute function increment_reputation_created_by();
+
+create or replace trigger on_store_added
+  after insert on public.stores
+  for each row execute function increment_reputation_created_by();
+
 -- 6. Row Level Security
 -- ============================================================
 
