@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MapPin, Navigation, Loader, Store } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -8,6 +9,7 @@ export default function StoresPage() {
   const [coords, setCoords] = useState(null)
   const [locating, setLocating] = useState(false)
   const [locError, setLocError] = useState('')
+  const navigate = useNavigate()
 
   const { data: stores, isLoading } = useQuery({
     queryKey: ['nearby-stores', coords?.lat, coords?.lng],
@@ -84,7 +86,7 @@ export default function StoresPage() {
       {stores?.length > 0 && (
         <div className="store-list">
           {stores.map((s) => (
-            <div key={s.id} className="store-card">
+            <div key={s.id} className="store-card store-card-link" onClick={() => navigate(`/stores/${s.id}`)}>
               <div className="store-icon">
                 <Store size={20} />
               </div>

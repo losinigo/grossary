@@ -33,6 +33,15 @@
   box-shadow: var(--shadow-sm);
 }
 
+.store-card-link {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.store-card-link:hover {
+  background: var(--color-gray-50);
+}
+
 .store-icon {
   display: flex;
   align-items: center;

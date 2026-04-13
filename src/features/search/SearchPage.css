@@ -88,6 +88,15 @@
   box-shadow: var(--shadow-sm);
 }
 
+.result-card-link {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.result-card-link:hover {
+  background: var(--color-gray-50);
+}
+
 .result-header {
   display: flex;
   justify-content: space-between;
@@ -168,4 +177,101 @@
   border-radius: 50%;
   background: var(--color-gray-200);
   color: var(--color-gray-400);
+}
+
+.home-section {
+  margin-top: 20px;
+}
+
+.home-section-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.home-empty {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--color-gray-400);
+  font-size: 0.85rem;
+}
+
+.recent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.recent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  color: var(--color-gray-900);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.recent-chip:hover {
+  background: var(--color-gray-50);
+}
+
+.recent-chip-text {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-chip-remove {
+  display: flex;
+  align-items: center;
+  color: var(--color-gray-400);
+  transition: color 0.15s;
+}
+
+.recent-chip-remove:hover {
+  color: var(--color-gray-900);
+}
+
+.results-section-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 16px;
+  margin-bottom: -4px;
+}
+
+.store-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.store-result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-100);
+  color: var(--color-gray-500);
+  flex-shrink: 0;
+}
+
+.store-result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }

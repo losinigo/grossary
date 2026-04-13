@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -9,8 +9,12 @@ import './Forms.css'
 export default function AddPrice() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [productId, setProductId] = useState('')
-  const [productDisplay, setProductDisplay] = useState('')
+  const location = useLocation()
+  const prefill = location.state
+  const [productId, setProductId] = useState(prefill?.productId || '')
+  const [productDisplay, setProductDisplay] = useState(
+    prefill?.productId ? `${prefill.productName}${prefill.productBrand ? ` (${prefill.productBrand})` : ''}` : ''
+  )
   const [storeId, setStoreId] = useState('')
   const [price, setPrice] = useState('')
   const [productSearch, setProductSearch] = useState('')

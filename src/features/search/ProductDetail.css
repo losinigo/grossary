@@ -1,0 +1,250 @@
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+  padding: 4px 0;
+}
+
+.product-info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: 20px 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+}
+
+.product-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+
+.product-brand {
+  font-size: 0.85rem;
+  color: var(--color-gray-500);
+  font-weight: 500;
+}
+
+.product-barcode {
+  font-size: 0.78rem;
+  color: var(--color-gray-400);
+  font-family: monospace;
+  background: var(--color-gray-100);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+  margin-bottom: 10px;
+}
+
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-card {
+  background: #fff;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-green);
+}
+
+.detail-time {
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+}
+
+.detail-store {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--color-gray-500);
+}
+
+.detail-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+}
+
+.detail-confirmed {
+  color: var(--color-green);
+  font-weight: 500;
+}
+
+.detail-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.detail-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-gray-200);
+  color: var(--color-gray-400);
+}
+
+.detail-unavailable {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-red);
+  background: #fff0f0;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  align-self: flex-start;
+}
+
+.detail-confirm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: opacity 0.15s;
+}
+
+.confirm-btn:disabled {
+  opacity: 0.5;
+}
+
+.confirm-yes {
+  background: #e8f9ee;
+  color: var(--color-green);
+}
+
+.confirm-no {
+  background: #fff0f0;
+  color: var(--color-red);
+}
+
+.confirm-active {
+  opacity: 1;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px currentColor inset;
+}
+
+.confirm-inactive {
+  opacity: 0.35;
+  background: var(--color-gray-100);
+  color: var(--color-gray-400);
+}
+
+.detail-empty {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--color-gray-400);
+  font-size: 0.85rem;
+}
+
+.history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.history-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-contributor {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-gray-900);
+}
+
+.history-store {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+}
+
+.history-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.history-price {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-green);
+}
+
+.history-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  color: var(--color-gray-400);
+}

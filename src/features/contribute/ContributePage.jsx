@@ -6,7 +6,7 @@ import './ContributePage.css'
 const actions = [
   { icon: PackagePlus, label: 'Add New Item', desc: 'Scan or enter a new grocery product', path: '/contribute/item' },
   { icon: DollarSign, label: 'Update Price', desc: 'Report a price you saw in store', path: '/contribute/price' },
-  { icon: ShieldCheck, label: 'Confirm Price', desc: 'Verify an existing price is still accurate', path: '/contribute/price' },
+  { icon: ShieldCheck, label: 'Confirm Price', desc: 'Verify an existing price is still accurate', path: '/contribute/confirm' },
   { icon: StoreIcon, label: 'Add Store', desc: 'Add a grocery store not yet listed', path: '/contribute/store' },
 ]
 
