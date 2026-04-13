@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
-import { Search, ScanBarcode, MapPin, Clock, Users } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search, ScanBarcode, MapPin, Clock, Users, PlusCircle } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import BarcodeScanner from '../../components/BarcodeScanner'
@@ -9,8 +10,10 @@ export default function SearchPage() {
   const [query, setQuery] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [scanning, setScanning] = useState(false)
+  const [scannedBarcode, setScannedBarcode] = useState(null)
   const [coords, setCoords] = useState(null)
   const coordsRef = useRef(null)
+  const navigate = useNavigate()
 
   const requestLocation = () => {
     return new Promise((resolve) => {
@@ -60,6 +63,7 @@ export default function SearchPage() {
 
   const handleScan = (code) => {
     setScanning(false)
+    setScannedBarcode(code)
     setQuery(code)
     doSearch(code)
   }
@@ -103,6 +107,14 @@ export default function SearchPage() {
         <div className="empty-state">
           <p className="empty-title">No results found</p>
           <p className="empty-subtitle">Try a different search term, or be the first to add this item!</p>
+          {scannedBarcode && (
+            <button
+              className="btn-primary"
+              onClick={() => navigate('/contribute/item', { state: { barcode: scannedBarcode } })}
+            >
+              <PlusCircle size={18} /> Add Item
+            </button>
+          )}
         </div>
       )}
 

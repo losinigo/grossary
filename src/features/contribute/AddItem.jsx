@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, ScanBarcode } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -11,9 +11,10 @@ const categories = ['Dairy', 'Meat', 'Produce', 'Bakery', 'Beverages', 'Snacks',
 export default function AddItem() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [name, setName] = useState('')
   const [brand, setBrand] = useState('')
-  const [barcode, setBarcode] = useState('')
+  const [barcode, setBarcode] = useState(location.state?.barcode || '')
   const [category, setCategory] = useState('')
   const [scanning, setScanning] = useState(false)
   const [submitting, setSubmitting] = useState(false)

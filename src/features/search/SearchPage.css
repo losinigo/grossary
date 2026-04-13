@@ -59,6 +59,13 @@
   max-width: 280px;
 }
 
+.empty-state .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
 .search-status {
   text-align: center;
   padding: 40px 0;
