@@ -51,7 +51,7 @@ export default function ProductDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from('current_prices')
-        .select('id, price, is_available, created_at, confirmation_count, store_id, contributor_name, contributor_avatar_url')
+        .select('id, price, is_available, created_at, confirmation_count, store_id, user_id, contributor_name, contributor_avatar_url')
         .eq('product_id', id)
       if (!data?.length) return []
       const storeIds = [...new Set(data.map((p) => p.store_id))]
@@ -130,7 +130,7 @@ export default function ProductDetail() {
                   </span>
                 </div>
                 {p.is_available === false && <span className="detail-unavailable">Marked unavailable</span>}
-                {user && (
+                {user && user.id !== p.user_id && (
                   <div className="detail-confirm-actions">
                     {(() => {
                       const status = myConfirmations?.[p.id]

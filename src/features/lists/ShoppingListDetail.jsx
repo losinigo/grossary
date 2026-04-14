@@ -17,12 +17,16 @@ export default function ShoppingListDetail() {
   const [quantity, setQuantity] = useState('1')
   const [notes, setNotes] = useState('')
   const [adding, setAdding] = useState(false)
+  const [estimationMode, setEstimationMode] = useState('optimized')
+  const [selectedStoreId, setSelectedStoreId] = useState(null)
 
   const { data: list, isLoading: listLoading } = useQuery({
-    queryKey: ['shopping-list', id],
+    queryKey: ['shopping-list', id, estimationMode, selectedStoreId],
     queryFn: async () => {
-      const { data } = await supabase.rpc('get_shopping_list_summary', { 
-        list_uuid: id 
+      const { data } = await supabase.rpc('get_shopping_list_summary_with_mode', { 
+        list_uuid: id,
+        estimation_mode: estimationMode,
+        specific_store_id: selectedStoreId
       })
       return data?.[0] || null
     },
@@ -30,14 +34,24 @@ export default function ShoppingListDetail() {
   })
 
   const { data: items, isLoading: itemsLoading } = useQuery({
-    queryKey: ['shopping-list-items', id],
+    queryKey: ['shopping-list-items', id, estimationMode, selectedStoreId],
     queryFn: async () => {
-      const { data } = await supabase.rpc('get_shopping_list_price_estimates', { 
-        list_uuid: id 
+      const { data } = await supabase.rpc('get_shopping_list_price_estimates_with_mode', { 
+        list_uuid: id,
+        estimation_mode: estimationMode,
+        specific_store_id: selectedStoreId
       })
       return data || []
     },
     enabled: !!id,
+  })
+
+  const { data: stores } = useQuery({
+    queryKey: ['stores-list'],
+    queryFn: async () => {
+      const { data } = await supabase.from('stores').select('id, name, address').order('name')
+      return data || []
+    },
   })
 
   const { data: products } = useQuery({
@@ -124,6 +138,31 @@ export default function ShoppingListDetail() {
     if (product.unit_type === 'piece') setQuantity('1')
   }
 
+  const handleModeChange = (mode) => {
+    setEstimationMode(mode)
+    if (mode !== 'specific_store') {
+      setSelectedStoreId(null)
+    }
+  }
+
+  const getModeLabel = (mode) => {
+    switch (mode) {
+      case 'near_me': return 'Near Me'
+      case 'specific_store': return 'Specific Store'
+      case 'optimized': return 'Optimized'
+      default: return 'Optimized'
+    }
+  }
+
+  const getModeDescription = (mode) => {
+    switch (mode) {
+      case 'near_me': return 'Average prices from nearby stores'
+      case 'specific_store': return 'Prices from selected store only'
+      case 'optimized': return 'Best deals from different stores'
+      default: return 'Best deals from different stores'
+    }
+  }
+
   if (listLoading) return <div className="page"><p>Loading...</p></div>
   if (!list) return <div className="page"><p>List not found.</p></div>
 
@@ -170,8 +209,42 @@ export default function ShoppingListDetail() {
           </div>
         )}
       </div>
-
       <div className="list-actions">
+        <div className="estimation-modes">
+          <div className="mode-selector">
+            <label className="mode-label">Price Estimation:</label>
+            <div className="mode-buttons">
+              {['optimized', 'near_me', 'specific_store'].map((mode) => (
+                <button
+                  key={mode}
+                  className={`mode-btn ${estimationMode === mode ? 'active' : ''}`}
+                  onClick={() => handleModeChange(mode)}
+                >
+                  {getModeLabel(mode)}
+                </button>
+              ))}
+            </div>
+            <p className="mode-description">{getModeDescription(estimationMode)}</p>
+          </div>
+          
+          {estimationMode === 'specific_store' && (
+            <div className="store-selector">
+              <select 
+                className="store-select" 
+                value={selectedStoreId || ''} 
+                onChange={(e) => setSelectedStoreId(e.target.value || null)}
+              >
+                <option value="">Select a store...</option>
+                {stores?.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name}{store.address ? ` — ${store.address}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+        
         <button className="btn-primary" onClick={() => setShowAddItem(true)}>
           <Plus size={18} /> Add Item
         </button>
@@ -287,7 +360,13 @@ export default function ShoppingListDetail() {
                       {item.is_best_deal && <span className="best-deal-badge">Best Deal!</span>}
                     </div>
                     <div className="item-store-info">
-                      {item.is_best_deal ? 'Lowest price at' : 'Best recent price at'} {item.store_name}
+                      {estimationMode === 'near_me' && item.price_count_nearby > 1 ? (
+                        <>Average from {item.price_count_nearby} nearby stores</>
+                      ) : estimationMode === 'optimized' && item.is_best_deal ? (
+                        <>Lowest price at {item.store_name}</>
+                      ) : (
+                        <>{estimationMode === 'specific_store' ? 'Price at' : 'Best recent price at'} {item.store_name}</>
+                      )}
                       {item.distance_km && <span className="store-distance"> • {item.distance_km}km away</span>}
                     </div>
                   </div>

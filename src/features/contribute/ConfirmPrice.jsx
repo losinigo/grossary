@@ -33,7 +33,7 @@ export default function ConfirmPrice() {
     queryFn: async () => {
       const { data } = await supabase
         .from('current_prices')
-        .select('id, price, is_available, created_at, confirmation_count, store_id, contributor_name')
+        .select('id, price, is_available, created_at, confirmation_count, store_id, user_id, contributor_name')
         .eq('product_id', productId)
       if (!data?.length) return []
       const storeIds = [...new Set(data.map((p) => p.store_id))]
@@ -88,25 +88,27 @@ export default function ConfirmPrice() {
       <p className="page-subtitle">Verify that an existing price is still accurate.</p>
 
       <div className="form">
-        <label className="form-label">
-          Search Product *
-          <input
-            className="form-input"
-            value={productId ? productDisplay : productSearch}
-            onChange={(e) => { setProductSearch(e.target.value); setProductId(''); setProductDisplay('') }}
-            placeholder="Search by name, brand, or barcode"
-          />
-        </label>
+        <div className="search-field">
+          <label className="form-label">
+            Search Product *
+            <input
+              className="form-input"
+              value={productId ? productDisplay : productSearch}
+              onChange={(e) => { setProductSearch(e.target.value); setProductId(''); setProductDisplay('') }}
+              placeholder="Search by name, brand, or barcode"
+            />
+          </label>
 
-        {products?.length > 0 && !productId && (
-          <div className="dropdown">
-            {products.map((p) => (
-              <button key={p.id} type="button" className="dropdown-item" onClick={() => { setProductId(p.id); setProductDisplay(`${p.name}${p.brand ? ` (${p.brand})` : ''}`); setProductSearch('') }}>
-                {p.name} {p.brand && <span className="text-muted">— {p.brand}</span>}
-              </button>
-            ))}
-          </div>
-        )}
+          {products?.length > 0 && !productId && (
+            <div className="dropdown">
+              {products.map((p) => (
+                <button key={p.id} type="button" className="dropdown-item" onClick={() => { setProductId(p.id); setProductDisplay(`${p.name}${p.brand ? ` (${p.brand})` : ''}`); setProductSearch('') }}>
+                  {p.name} {p.brand && <span className="text-muted">— {p.brand}</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {productId && pricesLoading && <p className="search-status">Loading prices...</p>}
@@ -132,29 +134,33 @@ export default function ConfirmPrice() {
               )}
               {p.contributor_name && <span className="confirm-contributor">Reported by {p.contributor_name}</span>}
               {p.confirmation_count > 0 && <span className="confirm-count">{p.confirmation_count} confirmation{p.confirmation_count !== 1 ? 's' : ''}</span>}
-              <div className="confirm-actions">
-                {(() => {
-                  const status = myConfirmations?.[p.id]
-                  return (
-                    <>
-                      <button
-                        className={`confirm-btn confirm-yes${status === true ? ' confirm-active' : ''}${status === false ? ' confirm-inactive' : ''}`}
-                        onClick={() => confirm.mutate({ priceId: p.id, confirmed: true })}
-                        disabled={confirm.isPending}
-                      >
-                        <CheckCircle size={16} /> {status === true ? 'Confirmed' : 'Confirm'}
-                      </button>
-                      <button
-                        className={`confirm-btn confirm-no${status === false ? ' confirm-active' : ''}${status === true ? ' confirm-inactive' : ''}`}
-                        onClick={() => confirm.mutate({ priceId: p.id, confirmed: false })}
-                        disabled={confirm.isPending}
-                      >
-                        <XCircle size={16} /> {status === false ? 'Denied' : 'Deny'}
-                      </button>
-                    </>
-                  )
-                })()}
-              </div>
+              {user.id !== p.user_id ? (
+                <div className="confirm-actions">
+                  {(() => {
+                    const status = myConfirmations?.[p.id]
+                    return (
+                      <>
+                        <button
+                          className={`confirm-btn confirm-yes${status === true ? ' confirm-active' : ''}${status === false ? ' confirm-inactive' : ''}`}
+                          onClick={() => confirm.mutate({ priceId: p.id, confirmed: true })}
+                          disabled={confirm.isPending}
+                        >
+                          <CheckCircle size={16} /> {status === true ? 'Confirmed' : 'Confirm'}
+                        </button>
+                        <button
+                          className={`confirm-btn confirm-no${status === false ? ' confirm-active' : ''}${status === true ? ' confirm-inactive' : ''}`}
+                          onClick={() => confirm.mutate({ priceId: p.id, confirmed: false })}
+                          disabled={confirm.isPending}
+                        >
+                          <XCircle size={16} /> {status === false ? 'Denied' : 'Deny'}
+                        </button>
+                      </>
+                    )
+                  })()}
+                </div>
+              ) : (
+                <p className="confirm-own-price">You reported this price</p>
+              )}
             </div>
           ))}
         </div>

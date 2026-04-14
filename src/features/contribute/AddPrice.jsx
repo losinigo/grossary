@@ -78,32 +78,34 @@ export default function AddPrice() {
       <p className="page-subtitle">Report a price you saw in store.</p>
 
       <form className="form" onSubmit={handleSubmit}>
-        <label className="form-label">
-          Search Product *
-          <input
-            className="form-input"
-            value={productId ? productDisplay : productSearch}
-            onChange={(e) => { setProductSearch(e.target.value); setProductId(''); setProductDisplay('') }}
-            placeholder="Search by name, brand, or barcode"
-          />
-        </label>
+        <div className="search-field">
+          <label className="form-label">
+            Search Product *
+            <input
+              className="form-input"
+              value={productId ? productDisplay : productSearch}
+              onChange={(e) => { setProductSearch(e.target.value); setProductId(''); setProductDisplay('') }}
+              placeholder="Search by name, brand, or barcode"
+            />
+          </label>
 
-        {products?.length > 0 && !productId && (
-          <div className="dropdown">
-            {products.map((p) => (
-              <button key={p.id} type="button" className="dropdown-item" onClick={() => { 
-                setProductId(p.id); 
-                setProductDisplay(`${p.name}${p.brand ? ` (${p.brand})` : ''}`); 
-                setProductUnit(p);
-                setProductSearch('');
-                if (p.unit_type === 'piece') setQuantity('1');
-              }}>
-                {p.name} {p.brand && <span className="text-muted">— {p.brand}</span>}
-                {p.unit_type !== 'piece' && <span className="text-muted"> • per {p.unit_abbreviation}</span>}
-              </button>
-            ))}
-          </div>
-        )}
+          {products?.length > 0 && !productId && (
+            <div className="dropdown">
+              {products.map((p) => (
+                <button key={p.id} type="button" className="dropdown-item" onClick={() => { 
+                  setProductId(p.id); 
+                  setProductDisplay(`${p.name}${p.brand ? ` (${p.brand})` : ''}`); 
+                  setProductUnit(p);
+                  setProductSearch('');
+                  if (p.unit_type === 'piece') setQuantity('1');
+                }}>
+                  {p.name} {p.brand && <span className="text-muted">— {p.brand}</span>}
+                  {p.unit_type !== 'piece' && <span className="text-muted"> • per {p.unit_abbreviation}</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <label className="form-label">
           Store *
