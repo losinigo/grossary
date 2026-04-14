@@ -11,6 +11,8 @@ import AddPrice from './features/contribute/AddPrice'
 import ConfirmPrice from './features/contribute/ConfirmPrice'
 import StoresPage from './features/stores/StoresPage'
 import StoreDetail from './features/stores/StoreDetail'
+import ShoppingListsPage from './features/lists/ShoppingListsPage'
+import ShoppingListDetail from './features/lists/ShoppingListDetail'
 import ProfilePage from './features/profile/ProfilePage'
 import ContributionsPage from './features/profile/ContributionsPage'
 
@@ -32,6 +34,8 @@ export default function App() {
             <Route path="contribute/confirm" element={<ConfirmPrice />} />
               <Route path="stores" element={<StoresPage />} />
               <Route path="stores/:id" element={<StoreDetail />} />
+              <Route path="lists" element={<ShoppingListsPage />} />
+              <Route path="lists/:id" element={<ShoppingListDetail />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="profile/contributions" element={<ContributionsPage />} />
             </Route>

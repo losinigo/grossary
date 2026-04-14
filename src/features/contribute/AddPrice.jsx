@@ -15,8 +15,10 @@ export default function AddPrice() {
   const [productDisplay, setProductDisplay] = useState(
     prefill?.productId ? `${prefill.productName}${prefill.productBrand ? ` (${prefill.productBrand})` : ''}` : ''
   )
+  const [productUnit, setProductUnit] = useState(null)
   const [storeId, setStoreId] = useState('')
   const [price, setPrice] = useState('')
+  const [quantity, setQuantity] = useState('1')
   const [productSearch, setProductSearch] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -27,7 +29,7 @@ export default function AddPrice() {
       if (!productSearch.trim()) return []
       const { data } = await supabase
         .from('products')
-        .select('id, name, brand')
+        .select('id, name, brand, unit_type, unit_name, unit_abbreviation')
         .or(`name.ilike.%${productSearch}%,brand.ilike.%${productSearch}%,barcode.eq.${productSearch}`)
         .limit(10)
       return data || []
@@ -47,6 +49,7 @@ export default function AddPrice() {
     e.preventDefault()
     if (!productId || !storeId || !price) return setError('All fields are required.')
     if (parseFloat(price) <= 0) return setError('Price must be greater than 0.')
+    if (parseFloat(quantity) <= 0) return setError('Quantity must be greater than 0.')
     setSubmitting(true)
     setError('')
 
@@ -54,6 +57,7 @@ export default function AddPrice() {
       product_id: productId,
       store_id: storeId,
       price: parseFloat(price),
+      unit_quantity: parseFloat(quantity),
       user_id: user.id,
     })
 
@@ -87,8 +91,15 @@ export default function AddPrice() {
         {products?.length > 0 && !productId && (
           <div className="dropdown">
             {products.map((p) => (
-              <button key={p.id} type="button" className="dropdown-item" onClick={() => { setProductId(p.id); setProductDisplay(`${p.name}${p.brand ? ` (${p.brand})` : ''}`); setProductSearch('') }}>
+              <button key={p.id} type="button" className="dropdown-item" onClick={() => { 
+                setProductId(p.id); 
+                setProductDisplay(`${p.name}${p.brand ? ` (${p.brand})` : ''}`); 
+                setProductUnit(p);
+                setProductSearch('');
+                if (p.unit_type === 'piece') setQuantity('1');
+              }}>
                 {p.name} {p.brand && <span className="text-muted">— {p.brand}</span>}
+                {p.unit_type !== 'piece' && <span className="text-muted"> • per {p.unit_abbreviation}</span>}
               </button>
             ))}
           </div>
@@ -102,9 +113,30 @@ export default function AddPrice() {
           </select>
         </label>
 
+        {productUnit && productUnit.unit_type !== 'piece' && (
+          <label className="form-label">
+            Quantity ({productUnit.unit_abbreviation}) *
+            <input 
+              className="form-input" 
+              type="number" 
+              step={productUnit.unit_type === 'weight' ? '0.1' : '0.01'} 
+              min="0" 
+              value={quantity} 
+              onChange={(e) => setQuantity(e.target.value)} 
+              placeholder={`e.g. 0.5 ${productUnit.unit_abbreviation}`} 
+            />
+          </label>
+        )}
+
         <label className="form-label">
-          Price *
+          {productUnit && productUnit.unit_type !== 'piece' 
+            ? `Total Price (₱${quantity && parseFloat(quantity) > 0 ? ` for ${quantity} ${productUnit.unit_abbreviation}` : ''}) *`
+            : 'Price *'
+          }
           <input className="form-input" type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" />
+          {productUnit && productUnit.unit_type !== 'piece' && price && quantity && parseFloat(price) > 0 && parseFloat(quantity) > 0 && (
+            <small className="form-hint">₱{(parseFloat(price) / parseFloat(quantity)).toFixed(2)} per {productUnit.unit_abbreviation}</small>
+          )}
         </label>
 
         {error && <p className="form-error">{error}</p>}

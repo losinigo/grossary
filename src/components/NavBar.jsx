@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { Search, PlusCircle, MapPin, User } from 'lucide-react'
+import { Search, PlusCircle, MapPin, User, ShoppingCart } from 'lucide-react'
 import './NavBar.css'
 
 const tabs = [
   { to: '/', label: 'Search', icon: Search },
   { to: '/contribute', label: 'Add', icon: PlusCircle },
+  { to: '/lists', label: 'Lists', icon: ShoppingCart },
   { to: '/stores', label: 'Stores', icon: MapPin },
   { to: '/profile', label: 'Profile', icon: User },
 ]

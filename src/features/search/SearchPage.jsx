@@ -249,8 +249,24 @@ export default function SearchPage() {
                   <div>
                     <span className="result-name">{r.product_name}</span>
                     {r.brand && <span className="result-brand">{r.brand}</span>}
+                    {r.unit_type !== 'piece' && (
+                      <span className="result-unit">per {r.unit_abbreviation}</span>
+                    )}
                   </div>
-                  {r.price != null && <span className="result-price">₱{Number(r.price).toFixed(2)}</span>}
+                  {r.price != null && (
+                    <div className="result-price-container">
+                      {r.unit_type !== 'piece' ? (
+                        <>
+                          <span className="result-price-per-unit">₱{Number(r.price_per_unit).toFixed(2)}/{r.unit_abbreviation}</span>
+                          {r.unit_quantity !== 1 && (
+                            <span className="result-total-price">₱{Number(r.price).toFixed(2)} for {r.unit_quantity}{r.unit_abbreviation}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="result-price">₱{Number(r.price).toFixed(2)}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {r.store_name && (
                   <div className="result-meta">
