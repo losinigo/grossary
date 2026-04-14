@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Check, X, Trash2, Edit3 } from 'lucide-react'
+import { ArrowLeft, Plus, Check, X, Trash2, Minus, MapPin } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -97,6 +97,20 @@ export default function ShoppingListDetail() {
           is_completed: completed,
           completed_at: completed ? new Date().toISOString() : null
         })
+        .eq('id', itemId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] })
+      queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
+    },
+  })
+
+  const updateQuantity = useMutation({
+    mutationFn: async ({ itemId, quantity }) => {
+      const { error } = await supabase
+        .from('shopping_list_items')
+        .update({ quantity })
         .eq('id', itemId)
       if (error) throw error
     },
@@ -334,46 +348,70 @@ export default function ShoppingListDetail() {
                 {item.is_completed ? <Check size={16} /> : <div className="checkbox-empty" />}
               </button>
 
+              <div className="item-qty-stepper">
+                <button
+                  className="qty-btn"
+                  onClick={() => {
+                    const step = item.unit_type === 'weight' ? 0.1 : 1
+                    const next = Math.max(step, parseFloat(item.quantity) - step)
+                    updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat(next.toFixed(2)) })
+                  }}
+                  disabled={updateQuantity.isPending}
+                >
+                  <Minus size={14} />
+                </button>
+                <input
+                  className="qty-input"
+                  type="number"
+                  min="0"
+                  step={item.unit_type === 'weight' ? '0.1' : '1'}
+                  value={item.quantity}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value)
+                    if (!isNaN(val) && val > 0)
+                      updateQuantity.mutate({ itemId: item.item_id, quantity: val })
+                  }}
+                />
+                <button
+                  className="qty-btn"
+                  onClick={() => {
+                    const step = item.unit_type === 'weight' ? 0.1 : 1
+                    const next = parseFloat(item.quantity) + step
+                    updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat(next.toFixed(2)) })
+                  }}
+                  disabled={updateQuantity.isPending}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+
               <div className="item-info">
                 <div className="item-name">
                   {item.product_name}
                   {item.product_brand && <span className="item-brand"> ({item.product_brand})</span>}
                 </div>
-                
-                <div className="item-details">
-                  {item.unit_type !== 'piece' ? (
-                    <span className="item-quantity">{item.quantity} {item.unit_abbreviation}</span>
-                  ) : (
-                    item.quantity > 1 && <span className="item-quantity">{item.quantity}x</span>
+                <div className="item-sub-row">
+                  {item.has_price_data && (
+                    <span className="item-store-info">
+                      <MapPin size={11} />
+                      {estimationMode === 'near_me' && item.price_count_nearby > 1
+                        ? `Avg. ${item.price_count_nearby} stores`
+                        : item.store_name}
+                      {item.distance_km && ` · ${item.distance_km}km`}
+                    </span>
                   )}
                   {item.notes && <span className="item-notes">{item.notes}</span>}
                 </div>
-                
-                {/* Price estimate info */}
+              </div>
+
+              <div className="item-price-col">
                 {item.has_price_data ? (
-                  <div className="item-price-info">
-                    <div className="item-price">
-                      ₱{Number(item.estimated_price).toFixed(2)}
-                      {item.unit_type !== 'piece' && (
-                        <span className="price-per-unit"> (₱{Number(item.price_per_unit).toFixed(2)}/{item.unit_abbreviation})</span>
-                      )}
-                      {item.is_best_deal && <span className="best-deal-badge">Best Deal!</span>}
-                    </div>
-                    <div className="item-store-info">
-                      {estimationMode === 'near_me' && item.price_count_nearby > 1 ? (
-                        <>Average from {item.price_count_nearby} nearby stores</>
-                      ) : estimationMode === 'optimized' && item.is_best_deal ? (
-                        <>Lowest price at {item.store_name}</>
-                      ) : (
-                        <>{estimationMode === 'specific_store' ? 'Price at' : 'Best recent price at'} {item.store_name}</>
-                      )}
-                      {item.distance_km && <span className="store-distance"> • {item.distance_km}km away</span>}
-                    </div>
-                  </div>
+                  <span className="item-price-inline">
+                    ₱{Number(item.estimated_price).toFixed(2)}
+                    {item.is_best_deal && <span className="best-deal-badge">Deal</span>}
+                  </span>
                 ) : (
-                  <div className="item-no-price">
-                    <span className="no-price-text">No recent price data</span>
-                  </div>
+                  <span className="item-no-price-inline">No price</span>
                 )}
               </div>
 
