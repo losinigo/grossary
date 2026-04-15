@@ -391,8 +391,9 @@
 
 .item-qty-stepper {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -400,8 +401,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 20px;
   border-radius: var(--radius-sm);
   background: var(--color-gray-100);
   color: var(--color-gray-700);
@@ -418,12 +419,12 @@
 }
 
 .qty-input {
-  width: 44px;
+  width: 36px;
   text-align: center;
-  padding: 4px 2px;
+  padding: 2px 0;
   border: 1px solid var(--color-gray-200);
   border-radius: var(--radius-sm);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--color-primary);
   background: #fff;

@@ -353,12 +353,12 @@ export default function ShoppingListDetail() {
                   className="qty-btn"
                   onClick={() => {
                     const step = item.unit_type === 'weight' ? 0.1 : 1
-                    const next = Math.max(step, parseFloat(item.quantity) - step)
+                    const next = Math.max(step, parseFloat(item.quantity) + step)
                     updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat(next.toFixed(2)) })
                   }}
                   disabled={updateQuantity.isPending}
                 >
-                  <Minus size={14} />
+                  <Plus size={14} />
                 </button>
                 <input
                   className="qty-input"
@@ -372,16 +372,16 @@ export default function ShoppingListDetail() {
                       updateQuantity.mutate({ itemId: item.item_id, quantity: val })
                   }}
                 />
-                <button
+                 <button
                   className="qty-btn"
                   onClick={() => {
                     const step = item.unit_type === 'weight' ? 0.1 : 1
-                    const next = parseFloat(item.quantity) + step
+                    const next = Math.max(step, parseFloat(item.quantity) - step)
                     updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat(next.toFixed(2)) })
                   }}
                   disabled={updateQuantity.isPending}
                 >
-                  <Plus size={14} />
+                  <Minus size={14} />
                 </button>
               </div>
 
@@ -408,7 +408,7 @@ export default function ShoppingListDetail() {
                 {item.has_price_data ? (
                   <span className="item-price-inline">
                     ₱{Number(item.estimated_price).toFixed(2)}
-                    {item.is_best_deal && <span className="best-deal-badge">Deal</span>}
+                    {item.is_best_deal && <span className="best-deal-badge">★</span>}
                   </span>
                 ) : (
                   <span className="item-no-price-inline">No price</span>
