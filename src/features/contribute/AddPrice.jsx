@@ -24,7 +24,7 @@ export default function AddPrice() {
   const [error, setError] = useState('')
 
   const { data: products } = useQuery({
-    queryKey: ['products', productSearch],
+    queryKey: ['products-search', productSearch],
     queryFn: async () => {
       if (!productSearch.trim()) return []
       const { data } = await supabase

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, ShoppingCart, Trash2, Edit3, CheckCircle } from 'lucide-react'
+import { Plus, ShoppingCart, Trash2, CheckCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -59,6 +59,7 @@ export default function ShoppingListsPage() {
       setNewListDescription('')
       navigate(`/lists/${newList.id}`)
     },
+    onError: () => alert('Failed to create list. Please try again.'),
   })
 
   const deleteList = useMutation({
@@ -69,6 +70,7 @@ export default function ShoppingListsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shopping-lists', user.id] })
     },
+    onError: () => alert('Failed to delete list. Please try again.'),
   })
 
   const handleCreateList = async (e) => {

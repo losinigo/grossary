@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, Clock, User, Users } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Users } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
+import { timeAgo } from '../../lib/utils'
+import Avatar from '../../components/Avatar'
 import './StoreDetail.css'
 
 export default function StoreDetail() {
@@ -31,14 +33,6 @@ export default function StoreDetail() {
     },
     enabled: !!id,
   })
-
-  const timeAgo = (date) => {
-    const days = Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    if (days < 7) return `${days}d ago`
-    return `${Math.floor(days / 7)}w ago`
-  }
 
   if (storeLoading) return <div className="page"><p>Loading...</p></div>
   if (!store) return <div className="page"><p>Store not found.</p></div>
@@ -72,11 +66,7 @@ export default function StoreDetail() {
                 <div className="store-product-footer">
                   {p.contributor_name && (
                     <span className="store-product-meta">
-                      {p.contributor_avatar_url ? (
-                        <img src={p.contributor_avatar_url} alt="" className="store-product-avatar" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="store-product-avatar-fallback"><User size={10} /></div>
-                      )}
+                      <Avatar src={p.contributor_avatar_url} size={18} />
                       {p.contributor_name}
                     </span>
                   )}

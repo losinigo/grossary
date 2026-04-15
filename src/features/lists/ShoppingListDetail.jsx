@@ -87,6 +87,7 @@ export default function ShoppingListDetail() {
       setQuantity('1')
       setNotes('')
     },
+    onError: () => alert('Failed to add item. Please try again.'),
   })
 
   const toggleItem = useMutation({
@@ -104,6 +105,7 @@ export default function ShoppingListDetail() {
       queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] })
       queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
     },
+    onError: () => alert('Failed to update item. Please try again.'),
   })
 
   const updateQuantity = useMutation({
@@ -118,6 +120,7 @@ export default function ShoppingListDetail() {
       queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] })
       queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
     },
+    onError: () => alert('Failed to update quantity. Please try again.'),
   })
 
   const removeItem = useMutation({
@@ -129,6 +132,7 @@ export default function ShoppingListDetail() {
       queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] })
       queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
     },
+    onError: () => alert('Failed to remove item. Please try again.'),
   })
 
   const handleAddItem = async (e) => {

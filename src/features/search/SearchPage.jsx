@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ScanBarcode, MapPin, Clock, Users, PlusCircle, User, Store, X } from 'lucide-react'
+import { Search, ScanBarcode, MapPin, Clock, Users, PlusCircle, Store, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
+import { timeAgo } from '../../lib/utils'
+import Avatar from '../../components/Avatar'
 import BarcodeScanner from '../../components/BarcodeScanner'
 import './SearchPage.css'
 
@@ -123,15 +125,6 @@ export default function SearchPage() {
     removeRecent(id)
     setRecentItems(getRecent())
   }, [])
-
-  const timeAgo = (date) => {
-    const diff = Date.now() - new Date(date).getTime()
-    const days = Math.floor(diff / 86400000)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    if (days < 7) return `${days}d ago`
-    return `${Math.floor(days / 7)}w ago`
-  }
 
   const hasProducts = results?.length > 0
   const hasStores = storeResults?.length > 0
@@ -279,11 +272,7 @@ export default function SearchPage() {
                 <div className="result-footer">
                   {r.contributor_name && (
                     <span className="result-meta-item">
-                      {r.contributor_avatar_url ? (
-                        <img src={r.contributor_avatar_url} alt="" className="contributor-avatar" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="contributor-avatar-fallback"><User size={10} /></div>
-                      )}
+                      <Avatar src={r.contributor_avatar_url} size={18} />
                       {r.contributor_name}
                     </span>
                   )}

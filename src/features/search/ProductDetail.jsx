@@ -1,8 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, Clock, User, Users, CheckCircle, XCircle } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle, XCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { timeAgo } from '../../lib/utils'
+import Avatar from '../../components/Avatar'
 import './ProductDetail.css'
 
 export default function ProductDetail() {
@@ -11,7 +13,7 @@ export default function ProductDetail() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
-  const confirm = useMutation({
+  const confirmMutation = useMutation({
     mutationFn: async ({ priceId, confirmed }) => {
       const { error } = await supabase.from('confirmations').upsert(
         { price_id: priceId, user_id: user.id, confirmed },
@@ -23,6 +25,7 @@ export default function ProductDetail() {
       queryClient.invalidateQueries({ queryKey: ['product-prices', id] })
       queryClient.invalidateQueries({ queryKey: ['my-confirmations', id] })
     },
+    onError: () => alert('Failed to submit. Please try again.'),
   })
 
   const { data: myConfirmations } = useQuery({
@@ -76,14 +79,6 @@ export default function ProductDetail() {
     enabled: !!id,
   })
 
-  const timeAgo = (date) => {
-    const days = Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    if (days < 7) return `${days}d ago`
-    return `${Math.floor(days / 7)}w ago`
-  }
-
   if (productLoading) return <div className="page"><p>Loading...</p></div>
   if (!product) return <div className="page"><p>Product not found.</p></div>
 
@@ -117,11 +112,7 @@ export default function ProductDetail() {
                 <div className="detail-footer">
                   {p.contributor_name && (
                     <span className="detail-meta">
-                      {p.contributor_avatar_url ? (
-                        <img src={p.contributor_avatar_url} alt="" className="detail-avatar" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="detail-avatar-fallback"><User size={10} /></div>
-                      )}
+                      <Avatar src={p.contributor_avatar_url} size={18} />
                       {p.contributor_name}
                     </span>
                   )}
@@ -138,15 +129,15 @@ export default function ProductDetail() {
                         <>
                           <button
                             className={`confirm-btn confirm-yes${status === true ? ' confirm-active' : ''}${status === false ? ' confirm-inactive' : ''}`}
-                            onClick={() => confirm.mutate({ priceId: p.id, confirmed: true })}
-                            disabled={confirm.isPending}
+                            onClick={() => confirmMutation.mutate({ priceId: p.id, confirmed: true })}
+                            disabled={confirmMutation.isPending}
                           >
                             <CheckCircle size={16} /> {status === true ? 'Confirmed' : 'Confirm'}
                           </button>
                           <button
                             className={`confirm-btn confirm-no${status === false ? ' confirm-active' : ''}${status === true ? ' confirm-inactive' : ''}`}
-                            onClick={() => confirm.mutate({ priceId: p.id, confirmed: false })}
-                            disabled={confirm.isPending}
+                            onClick={() => confirmMutation.mutate({ priceId: p.id, confirmed: false })}
+                            disabled={confirmMutation.isPending}
                           >
                             <XCircle size={16} /> {status === false ? 'Denied' : 'Deny'}
                           </button>
@@ -173,11 +164,7 @@ export default function ProductDetail() {
             {priceHistory.map((p) => (
               <div key={p.id} className="history-row">
                 <div className="history-left">
-                  {p.profiles?.avatar_url ? (
-                    <img src={p.profiles.avatar_url} alt="" className="detail-avatar" referrerPolicy="no-referrer" />
-                  ) : (
-                    <div className="detail-avatar-fallback"><User size={10} /></div>
-                  )}
+                  <Avatar src={p.profiles?.avatar_url} size={18} />
                   <div>
                     <span className="history-contributor">{p.profiles?.display_name || 'Unknown'}</span>
                     <span className="history-store">{p.stores?.name || ''}</span>

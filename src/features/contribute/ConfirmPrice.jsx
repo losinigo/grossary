@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, CheckCircle, XCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { timeAgo } from '../../lib/utils'
 import './Forms.css'
 
 export default function ConfirmPrice() {
@@ -15,7 +16,7 @@ export default function ConfirmPrice() {
   const [productDisplay, setProductDisplay] = useState('')
 
   const { data: products } = useQuery({
-    queryKey: ['products', productSearch],
+    queryKey: ['products-search', productSearch],
     queryFn: async () => {
       if (!productSearch.trim()) return []
       const { data } = await supabase
@@ -44,7 +45,7 @@ export default function ConfirmPrice() {
     enabled: !!productId,
   })
 
-  const confirm = useMutation({
+  const confirmMutation = useMutation({
     mutationFn: async ({ priceId, confirmed }) => {
       const { error } = await supabase.from('confirmations').upsert(
         { price_id: priceId, user_id: user.id, confirmed },
@@ -56,6 +57,7 @@ export default function ConfirmPrice() {
       queryClient.invalidateQueries({ queryKey: ['current-prices', productId] })
       queryClient.invalidateQueries({ queryKey: ['my-confirmations-cp', productId] })
     },
+    onError: () => alert('Failed to submit. Please try again.'),
   })
 
   const { data: myConfirmations } = useQuery({
@@ -70,14 +72,6 @@ export default function ConfirmPrice() {
     },
     enabled: !!user && !!productId,
   })
-
-  const timeAgo = (date) => {
-    const days = Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    if (days < 7) return `${days}d ago`
-    return `${Math.floor(days / 7)}w ago`
-  }
 
   return (
     <div className="page">
@@ -142,15 +136,15 @@ export default function ConfirmPrice() {
                       <>
                         <button
                           className={`confirm-btn confirm-yes${status === true ? ' confirm-active' : ''}${status === false ? ' confirm-inactive' : ''}`}
-                          onClick={() => confirm.mutate({ priceId: p.id, confirmed: true })}
-                          disabled={confirm.isPending}
+                          onClick={() => confirmMutation.mutate({ priceId: p.id, confirmed: true })}
+                          disabled={confirmMutation.isPending}
                         >
                           <CheckCircle size={16} /> {status === true ? 'Confirmed' : 'Confirm'}
                         </button>
                         <button
                           className={`confirm-btn confirm-no${status === false ? ' confirm-active' : ''}${status === true ? ' confirm-inactive' : ''}`}
-                          onClick={() => confirm.mutate({ priceId: p.id, confirmed: false })}
-                          disabled={confirm.isPending}
+                          onClick={() => confirmMutation.mutate({ priceId: p.id, confirmed: false })}
+                          disabled={confirmMutation.isPending}
                         >
                           <XCircle size={16} /> {status === false ? 'Denied' : 'Deny'}
                         </button>

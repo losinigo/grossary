@@ -3,6 +3,7 @@ import { ArrowLeft, PackagePlus, StoreIcon, DollarSign, ShieldCheck } from 'luci
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { timeAgo } from '../../lib/utils'
 import './ContributionsPage.css'
 
 export default function ContributionsPage() {
@@ -27,14 +28,6 @@ export default function ContributionsPage() {
     },
     enabled: !!user,
   })
-
-  const timeAgo = (date) => {
-    const days = Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    if (days < 7) return `${days}d ago`
-    return `${Math.floor(days / 7)}w ago`
-  }
 
   if (isLoading) return <div className="page"><p>Loading...</p></div>
 
