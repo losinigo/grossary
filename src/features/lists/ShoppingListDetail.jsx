@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Check, X, Trash2, Minus, MapPin } from 'lucide-react'
+import { ArrowLeft, Plus, Check, X, Trash2, Minus, MapPin, Pencil } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -19,11 +19,14 @@ export default function ShoppingListDetail() {
   const [adding, setAdding] = useState(false)
   const [estimationMode, setEstimationMode] = useState('optimized')
   const [selectedStoreId, setSelectedStoreId] = useState(null)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
 
   const { data: list, isLoading: listLoading } = useQuery({
     queryKey: ['shopping-list', id, estimationMode, selectedStoreId],
     queryFn: async () => {
-      const { data } = await supabase.rpc('get_shopping_list_summary_with_mode', { 
+      const { data } = await supabase.rpc('get_shopping_list_summary_with_mode', {
         list_uuid: id,
         estimation_mode: estimationMode,
         specific_store_id: selectedStoreId
@@ -36,7 +39,7 @@ export default function ShoppingListDetail() {
   const { data: items, isLoading: itemsLoading } = useQuery({
     queryKey: ['shopping-list-items', id, estimationMode, selectedStoreId],
     queryFn: async () => {
-      const { data } = await supabase.rpc('get_shopping_list_price_estimates_with_mode', { 
+      const { data } = await supabase.rpc('get_shopping_list_price_estimates_with_mode', {
         list_uuid: id,
         estimation_mode: estimationMode,
         specific_store_id: selectedStoreId
@@ -68,6 +71,34 @@ export default function ShoppingListDetail() {
     enabled: productSearch.length > 1,
   })
 
+  const updateList = useMutation({
+    mutationFn: async ({ name, description }) => {
+      const { error } = await supabase
+        .from('shopping_lists')
+        .update({ name, description: description || null })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
+      queryClient.invalidateQueries({ queryKey: ['shopping-lists'] })
+      setEditingTitle(false)
+    },
+    onError: () => alert('Failed to update list. Please try again.'),
+  })
+
+  const handleEditSave = (e) => {
+    e.preventDefault()
+    if (!editName.trim()) return
+    updateList.mutate({ name: editName.trim(), description: editDescription.trim() })
+  }
+
+  const handleEditOpen = () => {
+    setEditName(list.list_name)
+    setEditDescription(list.list_description || '')
+    setEditingTitle(true)
+  }
+
   const addItem = useMutation({
     mutationFn: async ({ productId, quantity, notes }) => {
       const { error } = await supabase.from('shopping_list_items').insert({
@@ -94,7 +125,7 @@ export default function ShoppingListDetail() {
     mutationFn: async ({ itemId, completed }) => {
       const { error } = await supabase
         .from('shopping_list_items')
-        .update({ 
+        .update({
           is_completed: completed,
           completed_at: completed ? new Date().toISOString() : null
         })
@@ -190,10 +221,70 @@ export default function ShoppingListDetail() {
         <ArrowLeft size={18} /> Back to Lists
       </button>
 
-      <div className="list-header">
+      <div className="shopping-list-info-card">
         <div className="list-info">
-          <h2 className="list-title">{list.list_name}</h2>
-          {list.list_description && <p className="list-description">{list.list_description}</p>}
+          {editingTitle ? (
+            <form className="edit-title-form" onSubmit={handleEditSave}>
+              <input
+                className="form-input edit-title-input"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="List name"
+                autoFocus
+              />
+              <input
+                className="form-input edit-title-input"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Description (optional)"
+              />
+              <div className="edit-title-actions">
+                <button type="button" className="btn-secondary" onClick={() => setEditingTitle(false)}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={updateList.isPending || !editName.trim()}>
+                  {updateList.isPending ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="list-title-row">
+              <h2 className="list-title">{list.list_name}</h2>
+              <button className="edit-title-btn" onClick={handleEditOpen} aria-label="Edit list name">
+                <Pencil size={15} />
+              </button>
+            </div>
+          )}
+          {!editingTitle && list.list_description && <p className="list-description">{list.list_description}</p>}
+            <div className="mode-selector">
+              <div className="mode-buttons">
+                {['optimized', 'near_me', 'specific_store'].map((mode) => (
+                  <button
+                    key={mode}
+                    className={`mode-btn ${estimationMode === mode ? 'active' : ''}`}
+                    onClick={() => handleModeChange(mode)}
+                  >
+                    {getModeLabel(mode)}
+                  </button>
+                ))}
+              </div>
+              <p className="mode-description">{getModeDescription(estimationMode)}</p>
+            </div>
+
+            {estimationMode === 'specific_store' && (
+              <div className="store-selector">
+                <select
+                  className="store-select"
+                  value={selectedStoreId || ''}
+                  onChange={(e) => setSelectedStoreId(e.target.value || null)}
+                >
+                  <option value="">Select a store...</option>
+                  {stores?.map((store) => (
+                    <option key={store.id} value={store.id}>
+                      {store.name}{store.address ? ` — ${store.address}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           
           {/* Price estimate summary */}
           {list.estimated_total && (
@@ -208,61 +299,12 @@ export default function ShoppingListDetail() {
                   <span className="price-amount">₱{Number(list.estimated_remaining).toFixed(2)}</span>
                 </div>
               )}
-              <div className="price-coverage">
-                {list.items_with_prices}/{list.total_items} items have price data
-                {list.best_deals_count > 0 && (
-                  <span className="best-deals-indicator"> • {list.best_deals_count} best deals found!</span>
-                )}
-              </div>
             </div>
           )}
         </div>
-        
-        {list.total_items > 0 && (
-          <div className="list-progress">
-            <div className="progress-circle">
-              <span className="progress-percentage">{Math.round(list.completion_percentage)}%</span>
-            </div>
-            <span className="progress-label">{list.completed_items}/{list.total_items} done</span>
-          </div>
-        )}
+
       </div>
       <div className="list-actions">
-        <div className="estimation-modes">
-          <div className="mode-selector">
-            <label className="mode-label">Price Estimation:</label>
-            <div className="mode-buttons">
-              {['optimized', 'near_me', 'specific_store'].map((mode) => (
-                <button
-                  key={mode}
-                  className={`mode-btn ${estimationMode === mode ? 'active' : ''}`}
-                  onClick={() => handleModeChange(mode)}
-                >
-                  {getModeLabel(mode)}
-                </button>
-              ))}
-            </div>
-            <p className="mode-description">{getModeDescription(estimationMode)}</p>
-          </div>
-          
-          {estimationMode === 'specific_store' && (
-            <div className="store-selector">
-              <select 
-                className="store-select" 
-                value={selectedStoreId || ''} 
-                onChange={(e) => setSelectedStoreId(e.target.value || null)}
-              >
-                <option value="">Select a store...</option>
-                {stores?.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}{store.address ? ` — ${store.address}` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-        
         <button className="btn-primary" onClick={() => setShowAddItem(true)}>
           <Plus size={18} /> Add Item
         </button>
@@ -279,7 +321,7 @@ export default function ShoppingListDetail() {
                 placeholder="Search for a product..."
                 autoFocus
               />
-              
+
               {products?.length > 0 && !selectedProduct && (
                 <div className="dropdown">
                   {products.map((p) => (
@@ -376,7 +418,7 @@ export default function ShoppingListDetail() {
                       updateQuantity.mutate({ itemId: item.item_id, quantity: val })
                   }}
                 />
-                 <button
+                <button
                   className="qty-btn"
                   onClick={() => {
                     const step = item.unit_type === 'weight' ? 0.1 : 1
