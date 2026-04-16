@@ -11,12 +11,12 @@ import AddPrice from './features/contribute/AddPrice'
 import ConfirmPrice from './features/contribute/ConfirmPrice'
 import StoresPage from './features/stores/StoresPage'
 import StoreDetail from './features/stores/StoreDetail'
+import CommunityPage from './features/community/CommunityPage'
+import MemberProfile from './features/community/MemberProfile'
 import ShoppingListsPage from './features/lists/ShoppingListsPage'
 import ShoppingListDetail from './features/lists/ShoppingListDetail'
 import ProfilePage from './features/profile/ProfilePage'
 import ContributionsPage from './features/profile/ContributionsPage'
-import CommunityPage from './features/community/CommunityPage'
-import MemberProfile from './features/community/MemberProfile'
 
 const queryClient = new QueryClient()
 
@@ -37,7 +37,7 @@ export default function App() {
               <Route path="stores" element={<StoresPage />} />
               <Route path="stores/:id" element={<StoreDetail />} />
               <Route path="community" element={<CommunityPage />} />
-              <Route path="members/:userId" element={<MemberProfile />} />
+              <Route path="users/:id" element={<MemberProfile />} />
               <Route path="lists" element={<ShoppingListsPage />} />
               <Route path="lists/:id" element={<ShoppingListDetail />} />
               <Route path="profile" element={<ProfilePage />} />
