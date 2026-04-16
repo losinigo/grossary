@@ -91,19 +91,8 @@ export default function MemberProfile() {
         <p className="profile-email">
           Member since {new Date(profile.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
         </p>
-      </div>
 
-      <div className="stats-grid">
-        {stats.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="stat-card">
-            <Icon size={18} color="var(--color-primary)" />
-            <span className="stat-value">{value}</span>
-            <span className="stat-label">{label}</span>
-          </div>
-        ))}
-      </div>
-
-      {user && !isOwnProfile && (
+        {user && !isOwnProfile && (
         <div className="member-actions">
           {isFollowing ? (
             <button
@@ -126,10 +115,19 @@ export default function MemberProfile() {
           )}
         </div>
       )}
+      </div>
 
-      {isOwnProfile && (
-        <p className="own-profile-hint">This is your profile.</p>
-      )}
+
+
+      <div className="stats-grid">
+        {stats.map(({ icon: Icon, label, value }) => (
+          <div key={label} className="stat-card">
+            <Icon size={18} color="var(--color-primary)" />
+            <span className="stat-value">{value}</span>
+            <span className="stat-label">{label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

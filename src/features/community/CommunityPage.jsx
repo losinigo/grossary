@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Trophy } from 'lucide-react'
+import { Search, Trophy, MapPin, Clock } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../lib/hooks/useAuth'
+import { timeAgo } from '../../lib/utils'
 import Avatar from '../../components/Avatar'
 import './CommunityPage.css'
 
@@ -10,6 +12,7 @@ export default function CommunityPage() {
   const [query, setQuery] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const { data: searchResults, isLoading: searching } = useQuery({
     queryKey: ['user-search', searchTerm],
@@ -30,6 +33,15 @@ export default function CommunityPage() {
         .limit(20)
       return data || []
     },
+  })
+
+  const { data: feed } = useQuery({
+    queryKey: ['community-feed', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('get_user_feed', { p_user_id: user.id, limit_count: 20 })
+      return data || []
+    },
+    enabled: !!user,
   })
 
   const handleSearch = (e) => {
@@ -60,10 +72,38 @@ export default function CommunityPage() {
       </form>
 
       {!isSearching && (
-        <div className="community-section-header">
-          <Trophy size={16} color="var(--color-orange)" />
-          <span className="community-section-title">Top Contributors</span>
-        </div>
+        <>
+          {user && feed?.length > 0 && (
+            <>
+              <div className="community-section-header">
+                <Clock size={16} color="var(--color-primary)" />
+                <span className="community-section-title">Following Activity</span>
+              </div>
+              <div className="feed-list">
+                {feed.map((item) => (
+                  <div key={item.id} className="feed-card" onClick={() => navigate(`/product/${item.product_id}`)}>
+                    <div className="feed-card-left" onClick={(e) => { e.stopPropagation(); navigate(`/users/${item.user_id}`) }}>
+                      <Avatar src={item.avatar_url} size={32} />
+                    </div>
+                    <div className="feed-card-content">
+                      <span className="feed-user" onClick={(e) => { e.stopPropagation(); navigate(`/users/${item.user_id}`) }}>
+                        {item.display_name}
+                      </span>
+                      <span className="feed-text">
+                        reported <strong>₱{Number(item.price).toFixed(2)}</strong> for {item.product_name}{item.brand ? ` (${item.brand})` : ''}
+                      </span>
+                      <div className="feed-meta">
+                        <span className="feed-meta-item"><MapPin size={11} /> {item.store_name}</span>
+                        <span className="feed-meta-item"><Clock size={11} /> {timeAgo(item.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+        </>
       )}
 
       {searching && <p className="loading-text">Searching...</p>}
@@ -75,8 +115,14 @@ export default function CommunityPage() {
         </div>
       )}
 
+
+
       {list?.length > 0 && (
         <div className="contributor-list">
+          {!isSearching && (<div className="community-section-header">
+            <Trophy size={16} color="var(--color-orange)" />
+            <span className="community-section-title">Top Contributors</span>
+          </div>)}
           {list.map((user, i) => (
             <div key={user.id} className="contributor-card" onClick={() => navigate(`/users/${user.id}`)}>
               {!isSearching && <span className="contributor-rank">#{i + 1}</span>}
