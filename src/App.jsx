@@ -15,6 +15,8 @@ import ShoppingListsPage from './features/lists/ShoppingListsPage'
 import ShoppingListDetail from './features/lists/ShoppingListDetail'
 import ProfilePage from './features/profile/ProfilePage'
 import ContributionsPage from './features/profile/ContributionsPage'
+import CommunityPage from './features/community/CommunityPage'
+import MemberProfile from './features/community/MemberProfile'
 
 const queryClient = new QueryClient()
 
@@ -28,12 +30,14 @@ export default function App() {
               <Route index element={<SearchPage />} />
               <Route path="product/:id" element={<ProductDetail />} />
               <Route path="contribute" element={<ContributePage />} />
-            <Route path="contribute/store" element={<AddStore />} />
-            <Route path="contribute/item" element={<AddItem />} />
-            <Route path="contribute/price" element={<AddPrice />} />
-            <Route path="contribute/confirm" element={<ConfirmPrice />} />
+              <Route path="contribute/store" element={<AddStore />} />
+              <Route path="contribute/item" element={<AddItem />} />
+              <Route path="contribute/price" element={<AddPrice />} />
+              <Route path="contribute/confirm" element={<ConfirmPrice />} />
               <Route path="stores" element={<StoresPage />} />
               <Route path="stores/:id" element={<StoreDetail />} />
+              <Route path="community" element={<CommunityPage />} />
+              <Route path="members/:userId" element={<MemberProfile />} />
               <Route path="lists" element={<ShoppingListsPage />} />
               <Route path="lists/:id" element={<ShoppingListDetail />} />
               <Route path="profile" element={<ProfilePage />} />
