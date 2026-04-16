@@ -3,7 +3,6 @@ import { ArrowLeft, TrendingUp, Users, UserPlus, UserMinus, User } from 'lucide-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
-import './MemberProfile.css'
 
 export default function MemberProfile() {
   const { id } = useParams()
@@ -37,10 +36,7 @@ export default function MemberProfile() {
 
   const followMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('follows').insert({
-        follower_id: user.id,
-        following_id: id,
-      })
+      const { error } = await supabase.from('follows').insert({ follower_id: user.id, following_id: id })
       if (error) throw error
     },
     onSuccess: () => {
@@ -52,11 +48,7 @@ export default function MemberProfile() {
 
   const unfollowMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from('follows')
-        .delete()
-        .eq('follower_id', user.id)
-        .eq('following_id', id)
+      const { error } = await supabase.from('follows').delete().eq('follower_id', user.id).eq('following_id', id)
       if (error) throw error
     },
     onSuccess: () => {
@@ -77,54 +69,54 @@ export default function MemberProfile() {
 
   return (
     <div className="page">
-      <button className="back-btn" onClick={() => navigate(-1)}>
+      <button className="inline-flex items-center gap-1 text-primary text-sm font-medium mb-3 py-1" onClick={() => navigate(-1)}>
         <ArrowLeft size={18} /> Back
       </button>
 
-      <div className="profile-header">
+      <div className="flex flex-col items-center gap-2 pt-8 pb-6">
         {profile.avatar_url ? (
-          <img src={profile.avatar_url} alt="" className="avatar-img" referrerPolicy="no-referrer" />
+          <img src={profile.avatar_url} alt="" className="w-16 h-16 rounded-full object-cover" referrerPolicy="no-referrer" />
         ) : (
-          <div className="avatar"><User size={28} color="var(--color-gray-400)" /></div>
+          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+            <User size={28} color="var(--color-gray-400)" />
+          </div>
         )}
-        <p className="profile-name">{profile.display_name || 'User'}</p>
-        <p className="profile-email">
+        <p className="text-lg font-semibold text-gray-900">{profile.display_name || 'User'}</p>
+        <p className="text-xs text-gray-500">
           Member since {new Date(profile.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
         </p>
 
         {user && !isOwnProfile && (
-        <div className="member-actions">
-          {isFollowing ? (
-            <button
-              className="btn-unfollow"
-              onClick={() => unfollowMutation.mutate()}
-              disabled={unfollowMutation.isPending}
-            >
-              <UserMinus size={16} />
-              {unfollowMutation.isPending ? 'Unfollowing...' : 'Unfollow'}
-            </button>
-          ) : (
-            <button
-              className="btn-follow"
-              onClick={() => followMutation.mutate()}
-              disabled={followMutation.isPending}
-            >
-              <UserPlus size={16} />
-              {followMutation.isPending ? 'Following...' : 'Follow'}
-            </button>
-          )}
-        </div>
-      )}
+          <div className="flex justify-center mt-4">
+            {isFollowing ? (
+              <button
+                className="inline-flex items-center gap-2 px-7 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50"
+                onClick={() => unfollowMutation.mutate()}
+                disabled={unfollowMutation.isPending}
+              >
+                <UserMinus size={16} />
+                {unfollowMutation.isPending ? 'Unfollowing...' : 'Unfollow'}
+              </button>
+            ) : (
+              <button
+                className="inline-flex items-center gap-2 px-7 py-2.5 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity disabled:opacity-50"
+                onClick={() => followMutation.mutate()}
+                disabled={followMutation.isPending}
+              >
+                <UserPlus size={16} />
+                {followMutation.isPending ? 'Following...' : 'Follow'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-
-
-      <div className="stats-grid">
+      <div className="grid grid-cols-3 gap-2.5 mt-2">
         {stats.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="stat-card">
+          <div key={label} className="flex flex-col items-center gap-1 bg-white border border-gray-200 rounded-md py-4 px-2 shadow-sm">
             <Icon size={18} color="var(--color-primary)" />
-            <span className="stat-value">{value}</span>
-            <span className="stat-label">{label}</span>
+            <span className="text-lg font-bold text-gray-900">{value}</span>
+            <span className="text-[0.7rem] text-gray-500 font-medium">{label}</span>
           </div>
         ))}
       </div>

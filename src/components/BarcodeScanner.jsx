@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import Quagga from '@ericblade/quagga2'
 import { X } from 'lucide-react'
-import './BarcodeScanner.css'
 
 export default function BarcodeScanner({ onScan, onClose }) {
   const scannerRef = useRef(null)
@@ -60,16 +59,16 @@ export default function BarcodeScanner({ onScan, onClose }) {
   }, [handleDetected, onClose])
 
   return (
-    <div className="scanner-overlay">
-      <div className="scanner-container">
-        <div className="scanner-header">
-          <span className="scanner-title">Scan Barcode</span>
-          <button className="scanner-close" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/85 z-200 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg overflow-hidden w-full max-w-[400px]">
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-200">
+          <span className="text-[0.95rem] font-semibold">Scan Barcode</span>
+          <button className="flex items-center justify-center text-gray-500 p-1 rounded-sm hover:bg-gray-100" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
-        <div className="scanner-viewport" ref={scannerRef} />
-        <p className="scanner-hint">Point your camera at a barcode</p>
+        <div className="relative w-full overflow-hidden [&_video]:!w-full [&_video]:!h-auto [&_video]:block [&_canvas]:!w-full [&_canvas]:!h-auto [&_canvas]:block [&_canvas.drawingBuffer]:absolute [&_canvas.drawingBuffer]:top-0 [&_canvas.drawingBuffer]:left-0" ref={scannerRef} />
+        <p className="text-center py-3 text-xs text-gray-500">Point your camera at a barcode</p>
       </div>
     </div>
   )

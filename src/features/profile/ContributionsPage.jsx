@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { timeAgo } from '../../lib/utils'
-import './ContributionsPage.css'
 
 export default function ContributionsPage() {
   const { user } = useAuth()
@@ -32,65 +31,39 @@ export default function ContributionsPage() {
   if (isLoading) return <div className="page"><p>Loading...</p></div>
 
   const sections = [
-    {
-      icon: PackagePlus,
-      title: 'Items Added',
-      count: data?.products.length || 0,
-      items: data?.products.map((p) => ({ primary: p.name, secondary: timeAgo(p.created_at) })),
-    },
-    {
-      icon: StoreIcon,
-      title: 'Stores Added',
-      count: data?.stores.length || 0,
-      items: data?.stores.map((s) => ({ primary: s.name, secondary: timeAgo(s.created_at) })),
-    },
-    {
-      icon: DollarSign,
-      title: 'Prices Reported',
-      count: data?.prices.length || 0,
-      items: data?.prices.map((p) => ({
-        primary: `${p.products?.name || 'Unknown'} — ₱${Number(p.price).toFixed(2)}`,
-        secondary: `${p.stores?.name || ''} · ${timeAgo(p.created_at)}`,
-      })),
-    },
-    {
-      icon: ShieldCheck,
-      title: 'Prices Confirmed',
-      count: data?.confirmations.length || 0,
-      items: data?.confirmations.map((c) => ({
-        primary: c.prices?.products?.name || 'Unknown',
-        secondary: `${c.prices?.stores?.name || ''} · ${timeAgo(c.created_at)}`,
-      })),
-    },
+    { icon: PackagePlus, title: 'Items Added', count: data?.products.length || 0, items: data?.products.map((p) => ({ primary: p.name, secondary: timeAgo(p.created_at) })) },
+    { icon: StoreIcon, title: 'Stores Added', count: data?.stores.length || 0, items: data?.stores.map((s) => ({ primary: s.name, secondary: timeAgo(s.created_at) })) },
+    { icon: DollarSign, title: 'Prices Reported', count: data?.prices.length || 0, items: data?.prices.map((p) => ({ primary: `${p.products?.name || 'Unknown'} — ₱${Number(p.price).toFixed(2)}`, secondary: `${p.stores?.name || ''} · ${timeAgo(p.created_at)}` })) },
+    { icon: ShieldCheck, title: 'Prices Confirmed', count: data?.confirmations.length || 0, items: data?.confirmations.map((c) => ({ primary: c.prices?.products?.name || 'Unknown', secondary: `${c.prices?.stores?.name || ''} · ${timeAgo(c.created_at)}` })) },
   ]
 
   return (
     <div className="page">
-      <button className="back-btn" onClick={() => navigate('/profile')}>
+      <button className="inline-flex items-center gap-1 text-primary text-sm font-medium mb-3 py-1" onClick={() => navigate('/profile')}>
         <ArrowLeft size={18} /> Back
       </button>
-      <h2 className="page-title">My Contributions</h2>
-      <p className="page-subtitle">Breakdown of everything you've contributed.</p>
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900">My Contributions</h2>
+      <p className="text-sm text-gray-500 mt-1 mb-5">Breakdown of everything you've contributed.</p>
 
-      <div className="contrib-sections">
+      <div className="flex flex-col gap-4 mt-4">
         {sections.map(({ icon: Icon, title, count, items }) => (
-          <div key={title} className="contrib-section">
-            <div className="contrib-section-header">
+          <div key={title} className="bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3.5 border-b border-gray-100">
               <Icon size={18} color="var(--color-primary)" />
-              <span className="contrib-section-title">{title}</span>
-              <span className="contrib-section-count">{count}</span>
+              <span className="text-sm font-semibold text-gray-900 flex-1">{title}</span>
+              <span className="text-xs font-semibold text-primary bg-primary-light px-2.5 py-0.5 rounded-full">{count}</span>
             </div>
             {items?.length > 0 ? (
-              <div className="contrib-list">
+              <div className="flex flex-col">
                 {items.map((item, i) => (
-                  <div key={i} className="contrib-item">
-                    <span className="contrib-item-primary">{item.primary}</span>
-                    <span className="contrib-item-secondary">{item.secondary}</span>
+                  <div key={i} className="flex justify-between items-center px-4 py-2.5 border-b border-gray-100 last:border-b-0">
+                    <span className="text-sm font-medium text-gray-900">{item.primary}</span>
+                    <span className="text-xs text-gray-500 whitespace-nowrap ml-3">{item.secondary}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="contrib-empty">No contributions yet</p>
+              <p className="p-4 text-center text-sm text-gray-400">No contributions yet</p>
             )}
           </div>
         ))}

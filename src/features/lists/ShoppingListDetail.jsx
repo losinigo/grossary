@@ -4,7 +4,11 @@ import { ArrowLeft, Plus, Check, X, Trash2, Minus, MapPin, Pencil } from 'lucide
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
-import './ShoppingListDetail.css'
+
+const inputCls = 'w-full px-4 py-3 bg-white border border-gray-200 rounded-sm text-[0.95rem] text-gray-900 outline-none focus:border-primary font-[inherit] placeholder:text-gray-400'
+const backBtn = 'inline-flex items-center gap-1 text-primary text-sm font-medium mb-3 py-1'
+const btnPrimary = 'inline-flex items-center justify-center gap-2 flex-1 py-2.5 px-5 bg-primary text-white text-sm font-semibold rounded-sm hover:opacity-88 transition-opacity disabled:opacity-50'
+const btnSecondary = 'inline-flex items-center justify-center gap-2 flex-1 py-2.5 px-5 bg-gray-100 text-gray-700 text-sm font-medium rounded-sm hover:bg-gray-200 transition-colors'
 
 export default function ShoppingListDetail() {
   const { id } = useParams()
@@ -25,347 +29,157 @@ export default function ShoppingListDetail() {
 
   const { data: list, isLoading: listLoading } = useQuery({
     queryKey: ['shopping-list', id, estimationMode, selectedStoreId],
-    queryFn: async () => {
-      const { data } = await supabase.rpc('get_shopping_list_summary_with_mode', {
-        list_uuid: id,
-        estimation_mode: estimationMode,
-        specific_store_id: selectedStoreId
-      })
-      return data?.[0] || null
-    },
+    queryFn: async () => { const { data } = await supabase.rpc('get_shopping_list_summary_with_mode', { list_uuid: id, estimation_mode: estimationMode, specific_store_id: selectedStoreId }); return data?.[0] || null },
     enabled: !!id,
   })
 
   const { data: items, isLoading: itemsLoading } = useQuery({
     queryKey: ['shopping-list-items', id, estimationMode, selectedStoreId],
-    queryFn: async () => {
-      const { data } = await supabase.rpc('get_shopping_list_price_estimates_with_mode', {
-        list_uuid: id,
-        estimation_mode: estimationMode,
-        specific_store_id: selectedStoreId
-      })
-      return data || []
-    },
+    queryFn: async () => { const { data } = await supabase.rpc('get_shopping_list_price_estimates_with_mode', { list_uuid: id, estimation_mode: estimationMode, specific_store_id: selectedStoreId }); return data || [] },
     enabled: !!id,
   })
 
   const { data: stores } = useQuery({
     queryKey: ['stores-list'],
-    queryFn: async () => {
-      const { data } = await supabase.from('stores').select('id, name, address').order('name')
-      return data || []
-    },
+    queryFn: async () => { const { data } = await supabase.from('stores').select('id, name, address').order('name'); return data || [] },
   })
 
   const { data: products } = useQuery({
     queryKey: ['products-search', productSearch],
-    queryFn: async () => {
-      if (!productSearch.trim()) return []
-      const { data } = await supabase
-        .from('products')
-        .select('id, name, brand, unit_type, unit_name, unit_abbreviation')
-        .or(`name.ilike.%${productSearch}%,brand.ilike.%${productSearch}%,barcode.eq.${productSearch}`)
-        .limit(10)
-      return data || []
-    },
+    queryFn: async () => { if (!productSearch.trim()) return []; const { data } = await supabase.from('products').select('id, name, brand, unit_type, unit_name, unit_abbreviation').or(`name.ilike.%${productSearch}%,brand.ilike.%${productSearch}%,barcode.eq.${productSearch}`).limit(10); return data || [] },
     enabled: productSearch.length > 1,
   })
 
+  const invalidateList = () => { queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] }); queryClient.invalidateQueries({ queryKey: ['shopping-list', id] }) }
+
   const updateList = useMutation({
-    mutationFn: async ({ name, description }) => {
-      const { error } = await supabase
-        .from('shopping_lists')
-        .update({ name, description: description || null })
-        .eq('id', id)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
-      queryClient.invalidateQueries({ queryKey: ['shopping-lists'] })
-      setEditingTitle(false)
-    },
+    mutationFn: async ({ name, description }) => { const { error } = await supabase.from('shopping_lists').update({ name, description: description || null }).eq('id', id); if (error) throw error },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['shopping-list', id] }); queryClient.invalidateQueries({ queryKey: ['shopping-lists'] }); setEditingTitle(false) },
     onError: () => alert('Failed to update list. Please try again.'),
   })
 
-  const handleEditSave = (e) => {
-    e.preventDefault()
-    if (!editName.trim()) return
-    updateList.mutate({ name: editName.trim(), description: editDescription.trim() })
-  }
-
-  const handleEditOpen = () => {
-    setEditName(list.list_name)
-    setEditDescription(list.list_description || '')
-    setEditingTitle(true)
-  }
-
   const addItem = useMutation({
-    mutationFn: async ({ productId, quantity, notes }) => {
-      const { error } = await supabase.from('shopping_list_items').insert({
-        shopping_list_id: id,
-        product_id: productId,
-        quantity: parseFloat(quantity),
-        notes: notes.trim() || null,
-      })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] })
-      queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
-      setShowAddItem(false)
-      setProductSearch('')
-      setSelectedProduct(null)
-      setQuantity('1')
-      setNotes('')
-    },
+    mutationFn: async ({ productId, quantity, notes }) => { const { error } = await supabase.from('shopping_list_items').insert({ shopping_list_id: id, product_id: productId, quantity: parseFloat(quantity), notes: notes.trim() || null }); if (error) throw error },
+    onSuccess: () => { invalidateList(); setShowAddItem(false); setProductSearch(''); setSelectedProduct(null); setQuantity('1'); setNotes('') },
     onError: () => alert('Failed to add item. Please try again.'),
   })
 
   const toggleItem = useMutation({
-    mutationFn: async ({ itemId, completed }) => {
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .update({
-          is_completed: completed,
-          completed_at: completed ? new Date().toISOString() : null
-        })
-        .eq('id', itemId)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] })
-      queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
-    },
-    onError: () => alert('Failed to update item. Please try again.'),
+    mutationFn: async ({ itemId, completed }) => { const { error } = await supabase.from('shopping_list_items').update({ is_completed: completed, completed_at: completed ? new Date().toISOString() : null }).eq('id', itemId); if (error) throw error },
+    onSuccess: invalidateList, onError: () => alert('Failed to update item.'),
   })
 
   const updateQuantity = useMutation({
-    mutationFn: async ({ itemId, quantity }) => {
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .update({ quantity })
-        .eq('id', itemId)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] })
-      queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
-    },
-    onError: () => alert('Failed to update quantity. Please try again.'),
+    mutationFn: async ({ itemId, quantity }) => { const { error } = await supabase.from('shopping_list_items').update({ quantity }).eq('id', itemId); if (error) throw error },
+    onSuccess: invalidateList, onError: () => alert('Failed to update quantity.'),
   })
 
   const removeItem = useMutation({
-    mutationFn: async (itemId) => {
-      const { error } = await supabase.from('shopping_list_items').delete().eq('id', itemId)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] })
-      queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
-    },
-    onError: () => alert('Failed to remove item. Please try again.'),
+    mutationFn: async (itemId) => { const { error } = await supabase.from('shopping_list_items').delete().eq('id', itemId); if (error) throw error },
+    onSuccess: invalidateList, onError: () => alert('Failed to remove item.'),
   })
 
-  const handleAddItem = async (e) => {
-    e.preventDefault()
-    if (!selectedProduct || !quantity) return
-    setAdding(true)
-    try {
-      await addItem.mutateAsync({
-        productId: selectedProduct.id,
-        quantity,
-        notes,
-      })
-    } finally {
-      setAdding(false)
-    }
-  }
+  const handleAddItem = async (e) => { e.preventDefault(); if (!selectedProduct || !quantity) return; setAdding(true); try { await addItem.mutateAsync({ productId: selectedProduct.id, quantity, notes }) } finally { setAdding(false) } }
+  const handleProductSelect = (product) => { setSelectedProduct(product); setProductSearch(`${product.name}${product.brand ? ` (${product.brand})` : ''}`); if (product.unit_type === 'piece') setQuantity('1') }
+  const handleModeChange = (mode) => { setEstimationMode(mode); if (mode !== 'specific_store') setSelectedStoreId(null) }
+  const handleEditOpen = () => { setEditName(list.list_name); setEditDescription(list.list_description || ''); setEditingTitle(true) }
+  const handleEditSave = (e) => { e.preventDefault(); if (!editName.trim()) return; updateList.mutate({ name: editName.trim(), description: editDescription.trim() }) }
 
-  const handleProductSelect = (product) => {
-    setSelectedProduct(product)
-    setProductSearch(`${product.name}${product.brand ? ` (${product.brand})` : ''}`)
-    if (product.unit_type === 'piece') setQuantity('1')
-  }
-
-  const handleModeChange = (mode) => {
-    setEstimationMode(mode)
-    if (mode !== 'specific_store') {
-      setSelectedStoreId(null)
-    }
-  }
-
-  const getModeLabel = (mode) => {
-    switch (mode) {
-      case 'near_me': return 'Near Me'
-      case 'specific_store': return 'Specific Store'
-      case 'optimized': return 'Optimized'
-      default: return 'Optimized'
-    }
-  }
-
-  const getModeDescription = (mode) => {
-    switch (mode) {
-      case 'near_me': return 'Average prices from nearby stores'
-      case 'specific_store': return 'Prices from selected store only'
-      case 'optimized': return 'Best deals from different stores'
-      default: return 'Best deals from different stores'
-    }
-  }
+  const modeLabels = { near_me: 'Near Me', specific_store: 'Specific Store', optimized: 'Optimized' }
+  const modeDescs = { near_me: 'Average prices from nearby stores', specific_store: 'Prices from selected store only', optimized: 'Best deals from different stores' }
 
   if (listLoading) return <div className="page"><p>Loading...</p></div>
   if (!list) return <div className="page"><p>List not found.</p></div>
 
   return (
     <div className="page">
-      <button className="back-btn" onClick={() => navigate('/lists')}>
-        <ArrowLeft size={18} /> Back to Lists
-      </button>
+      <button className={backBtn} onClick={() => navigate('/lists')}><ArrowLeft size={18} /> Back to Lists</button>
 
-      <div className="shopping-list-info-card">
-        <div className="list-info">
+      <div className="flex flex-col gap-1 bg-white border border-gray-200 rounded-md px-4 py-5 shadow-sm mb-5">
+        <div className="flex-1 min-w-0">
           {editingTitle ? (
-            <form className="edit-title-form" onSubmit={handleEditSave}>
-              <input
-                className="form-input edit-title-input"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="List name"
-                autoFocus
-              />
-              <input
-                className="form-input edit-title-input"
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Description (optional)"
-              />
-              <div className="edit-title-actions">
-                <button type="button" className="btn-secondary" onClick={() => setEditingTitle(false)}>Cancel</button>
-                <button type="submit" className="btn-primary" disabled={updateList.isPending || !editName.trim()}>
-                  {updateList.isPending ? 'Saving...' : 'Save'}
-                </button>
+            <form className="flex flex-col gap-2 mb-3" onSubmit={handleEditSave}>
+              <input className={`${inputCls} !py-2 !px-3`} value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="List name" autoFocus />
+              <input className={`${inputCls} !py-2 !px-3`} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="Description (optional)" />
+              <div className="flex gap-2">
+                <button type="button" className={btnSecondary} onClick={() => setEditingTitle(false)}>Cancel</button>
+                <button type="submit" className={btnPrimary} disabled={updateList.isPending || !editName.trim()}>{updateList.isPending ? 'Saving...' : 'Save'}</button>
               </div>
             </form>
           ) : (
-            <div className="list-title-row">
-              <h2 className="list-title">{list.list_name}</h2>
-              <button className="edit-title-btn" onClick={handleEditOpen} aria-label="Edit list name">
-                <Pencil size={15} />
-              </button>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-xl font-semibold text-gray-900">{list.list_name}</h2>
+              <button className="flex items-center justify-center w-7 h-7 rounded-sm text-gray-400 shrink-0 hover:bg-gray-100 hover:text-primary transition-all" onClick={handleEditOpen} aria-label="Edit list name"><Pencil size={15} /></button>
             </div>
           )}
-          {!editingTitle && list.list_description && <p className="list-description">{list.list_description}</p>}
-            <div className="mode-selector">
-              <div className="mode-buttons">
-                {['optimized', 'near_me', 'specific_store'].map((mode) => (
-                  <button
-                    key={mode}
-                    className={`mode-btn ${estimationMode === mode ? 'active' : ''}`}
-                    onClick={() => handleModeChange(mode)}
-                  >
-                    {getModeLabel(mode)}
-                  </button>
-                ))}
-              </div>
-              <p className="mode-description">{getModeDescription(estimationMode)}</p>
-            </div>
+          {!editingTitle && list.list_description && <p className="text-sm text-gray-500 leading-relaxed mb-4">{list.list_description}</p>}
 
-            {estimationMode === 'specific_store' && (
-              <div className="store-selector">
-                <select
-                  className="store-select"
-                  value={selectedStoreId || ''}
-                  onChange={(e) => setSelectedStoreId(e.target.value || null)}
-                >
-                  <option value="">Select a store...</option>
-                  {stores?.map((store) => (
-                    <option key={store.id} value={store.id}>
-                      {store.name}{store.address ? ` — ${store.address}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          
-          {/* Price estimate summary */}
+          <div className="mb-4">
+            <div className="flex gap-2 mb-2">
+              {['optimized', 'near_me', 'specific_store'].map((mode) => (
+                <button key={mode} className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-sm text-center transition-all ${estimationMode === mode ? 'bg-primary text-white font-semibold' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`} onClick={() => handleModeChange(mode)}>
+                  {modeLabels[mode]}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 text-center">{modeDescs[estimationMode]}</p>
+          </div>
+
+          {estimationMode === 'specific_store' && (
+            <select className={`${inputCls} mt-4 appearance-none`} value={selectedStoreId || ''} onChange={(e) => setSelectedStoreId(e.target.value || null)}>
+              <option value="">Select a store...</option>
+              {stores?.map((s) => <option key={s.id} value={s.id}>{s.name}{s.address ? ` — ${s.address}` : ''}</option>)}
+            </select>
+          )}
+
           {list.estimated_total && (
-            <div className="price-summary">
-              <div className="price-total">
-                <span className="price-label">Estimated Total:</span>
-                <span className="price-amount">₱{Number(list.estimated_total).toFixed(2)}</span>
+            <div className="bg-primary-light rounded-md p-4 mt-3">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-gray-500 font-medium">Estimated Total:</span>
+                <span className="text-lg font-bold text-primary">₱{Number(list.estimated_total).toFixed(2)}</span>
               </div>
               {list.estimated_remaining && list.estimated_remaining !== list.estimated_total && (
-                <div className="price-remaining">
-                  <span className="price-label">Remaining:</span>
-                  <span className="price-amount">₱{Number(list.estimated_remaining).toFixed(2)}</span>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-gray-500 font-medium">Remaining:</span>
+                  <span className="text-lg font-bold text-primary">₱{Number(list.estimated_remaining).toFixed(2)}</span>
                 </div>
               )}
             </div>
           )}
         </div>
-
       </div>
-      <div className="list-actions">
-        <button className="btn-primary" onClick={() => setShowAddItem(true)}>
+
+      <div className="mb-5">
+        <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-sm hover:opacity-88 transition-opacity" onClick={() => setShowAddItem(true)}>
           <Plus size={18} /> Add Item
         </button>
       </div>
 
       {showAddItem && (
-        <div className="add-item-form">
+        <div className="bg-white border border-gray-200 rounded-lg p-5 mb-5 shadow-sm">
           <form onSubmit={handleAddItem}>
-            <div className="form-group">
-              <input
-                className="form-input"
-                value={productSearch}
-                onChange={(e) => { setProductSearch(e.target.value); setSelectedProduct(null) }}
-                placeholder="Search for a product..."
-                autoFocus
-              />
-
+            <div className="relative mb-4">
+              <input className={inputCls} value={productSearch} onChange={(e) => { setProductSearch(e.target.value); setSelectedProduct(null) }} placeholder="Search for a product..." autoFocus />
               {products?.length > 0 && !selectedProduct && (
-                <div className="dropdown">
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-sm shadow-md mt-1 overflow-hidden z-10">
                   {products.map((p) => (
-                    <button key={p.id} type="button" className="dropdown-item" onClick={() => handleProductSelect(p)}>
-                      {p.name} {p.brand && <span className="text-muted">— {p.brand}</span>}
-                      {p.unit_type !== 'piece' && <span className="text-muted"> • per {p.unit_abbreviation}</span>}
+                    <button key={p.id} type="button" className="block w-full px-4 py-3 text-left text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors" onClick={() => handleProductSelect(p)}>
+                      {p.name} {p.brand && <span className="text-gray-500">— {p.brand}</span>}
+                      {p.unit_type !== 'piece' && <span className="text-gray-500"> • per {p.unit_abbreviation}</span>}
                     </button>
                   ))}
                 </div>
               )}
             </div>
-
             {selectedProduct && (
               <>
                 {selectedProduct.unit_type !== 'piece' && (
-                  <div className="form-group">
-                    <input
-                      className="form-input"
-                      type="number"
-                      step={selectedProduct.unit_type === 'weight' ? '0.1' : '0.01'}
-                      min="0"
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                      placeholder={`Quantity (${selectedProduct.unit_abbreviation})`}
-                    />
-                  </div>
+                  <div className="mb-4"><input className={inputCls} type="number" step={selectedProduct.unit_type === 'weight' ? '0.1' : '0.01'} min="0" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder={`Quantity (${selectedProduct.unit_abbreviation})`} /></div>
                 )}
-
-                <div className="form-group">
-                  <input
-                    className="form-input"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Notes (optional)"
-                  />
-                </div>
-
-                <div className="form-actions">
-                  <button type="button" className="btn-secondary" onClick={() => setShowAddItem(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn-primary" disabled={adding}>
-                    {adding ? 'Adding...' : 'Add to List'}
-                  </button>
+                <div className="mb-4"><input className={inputCls} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes (optional)" /></div>
+                <div className="flex gap-3 mt-5">
+                  <button type="button" className={btnSecondary} onClick={() => setShowAddItem(false)}>Cancel</button>
+                  <button type="submit" className={btnPrimary} disabled={adding}>{adding ? 'Adding...' : 'Add to List'}</button>
                 </div>
               </>
             )}
@@ -373,99 +187,51 @@ export default function ShoppingListDetail() {
         </div>
       )}
 
-      {itemsLoading && <p className="loading-text">Loading items...</p>}
+      {itemsLoading && <p className="text-center py-10 text-gray-500 text-sm">Loading items...</p>}
 
       {!itemsLoading && items?.length === 0 && (
-        <div className="empty-items">
-          <p className="empty-title">No items in this list yet</p>
-          <p className="empty-subtitle">Add your first item to get started.</p>
+        <div className="text-center py-15 px-5">
+          <p className="text-base font-semibold text-gray-900 mb-2">No items in this list yet</p>
+          <p className="text-sm text-gray-500">Add your first item to get started.</p>
         </div>
       )}
 
       {items?.length > 0 && (
-        <div className="items-list">
+        <div className="flex flex-col gap-2">
           {items.map((item) => (
-            <div key={item.item_id} className={`item-card ${item.is_completed ? 'completed' : ''}`}>
-              <button
-                className="item-checkbox"
-                onClick={() => toggleItem.mutate({ itemId: item.item_id, completed: !item.is_completed })}
-                disabled={toggleItem.isPending}
-              >
-                {item.is_completed ? <Check size={16} /> : <div className="checkbox-empty" />}
+            <div key={item.item_id} className={`flex items-center gap-3 bg-white border border-gray-200 rounded-md px-4 py-4 shadow-sm transition-all ${item.is_completed ? 'opacity-60 bg-gray-50' : ''}`}>
+              <button className="flex items-center justify-center w-6 h-6 rounded-sm bg-primary text-white shrink-0 disabled:opacity-50 transition-all" onClick={() => toggleItem.mutate({ itemId: item.item_id, completed: !item.is_completed })} disabled={toggleItem.isPending}>
+                {item.is_completed ? <Check size={16} /> : <div className="w-6 h-6 border-2 border-gray-300 rounded-sm bg-white" />}
               </button>
 
-              <div className="item-qty-stepper">
-                <button
-                  className="qty-btn"
-                  onClick={() => {
-                    const step = item.unit_type === 'weight' ? 0.1 : 1
-                    const next = Math.max(step, parseFloat(item.quantity) + step)
-                    updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat(next.toFixed(2)) })
-                  }}
-                  disabled={updateQuantity.isPending}
-                >
-                  <Plus size={14} />
-                </button>
-                <input
-                  className="qty-input"
-                  type="number"
-                  min="0"
-                  step={item.unit_type === 'weight' ? '0.1' : '1'}
-                  value={item.quantity}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value)
-                    if (!isNaN(val) && val > 0)
-                      updateQuantity.mutate({ itemId: item.item_id, quantity: val })
-                  }}
-                />
-                <button
-                  className="qty-btn"
-                  onClick={() => {
-                    const step = item.unit_type === 'weight' ? 0.1 : 1
-                    const next = Math.max(step, parseFloat(item.quantity) - step)
-                    updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat(next.toFixed(2)) })
-                  }}
-                  disabled={updateQuantity.isPending}
-                >
-                  <Minus size={14} />
-                </button>
+              <div className="flex flex-col items-center gap-0.5 shrink-0">
+                <button className="flex items-center justify-center w-[26px] h-5 rounded-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shrink-0 disabled:opacity-40" onClick={() => { const step = item.unit_type === 'weight' ? 0.1 : 1; updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat((parseFloat(item.quantity) + step).toFixed(2)) }) }} disabled={updateQuantity.isPending}><Plus size={14} /></button>
+                <input className="w-9 text-center py-0.5 border border-gray-200 rounded-sm text-[0.8rem] font-semibold text-primary bg-white outline-none focus:border-primary font-[inherit] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" type="number" min="0" step={item.unit_type === 'weight' ? '0.1' : '1'} value={item.quantity} onChange={(e) => { const val = parseFloat(e.target.value); if (!isNaN(val) && val > 0) updateQuantity.mutate({ itemId: item.item_id, quantity: val }) }} />
+                <button className="flex items-center justify-center w-[26px] h-5 rounded-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shrink-0 disabled:opacity-40" onClick={() => { const step = item.unit_type === 'weight' ? 0.1 : 1; updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat(Math.max(step, parseFloat(item.quantity) - step).toFixed(2)) }) }} disabled={updateQuantity.isPending}><Minus size={14} /></button>
               </div>
 
-              <div className="item-info">
-                <div className="item-name">
-                  {item.product_name}
-                  {item.product_brand && <span className="item-brand"> ({item.product_brand})</span>}
+              <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                <div className={`text-[0.95rem] font-medium text-gray-900 truncate min-w-0 ${item.is_completed ? 'line-through' : ''}`}>
+                  {item.product_name}{item.product_brand && <span className="text-gray-500 font-normal"> ({item.product_brand})</span>}
                 </div>
-                <div className="item-sub-row">
-                  {item.has_price_data && (
-                    <span className="item-store-info">
-                      <MapPin size={11} />
-                      {estimationMode === 'near_me' && item.price_count_nearby > 1
-                        ? `Avg. ${item.price_count_nearby} stores`
-                        : item.store_name}
-                      {item.distance_km && ` · ${item.distance_km}km`}
-                    </span>
-                  )}
-                  {item.notes && <span className="item-notes">{item.notes}</span>}
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 min-w-0">
+                  {item.has_price_data && <span className="inline-flex items-center gap-1 truncate min-w-0"><MapPin size={11} />{item.store_name}{item.distance_km && ` · ${item.distance_km}km`}</span>}
+                  {item.notes && <span className="italic shrink-0">{item.notes}</span>}
                 </div>
               </div>
 
-              <div className="item-price-col">
+              <div className="shrink-0 flex flex-col items-end gap-0.5">
                 {item.has_price_data ? (
-                  <span className="item-price-inline">
-                    ₱{Number(item.estimated_price).toFixed(2)}
-                    {item.is_best_deal && <span className="best-deal-badge">★</span>}
-                  </span>
+                  <>
+                    <span className="text-sm font-bold text-green whitespace-nowrap">₱{Number(item.estimated_price).toFixed(2)}</span>
+                    {item.is_best_deal && <span className="inline-block bg-green text-white text-[0.7rem] font-semibold px-1.5 py-0.5 rounded-full uppercase">★</span>}
+                  </>
                 ) : (
-                  <span className="item-no-price-inline">No price</span>
+                  <span className="text-xs text-gray-400 italic whitespace-nowrap">No price</span>
                 )}
               </div>
 
-              <button
-                className="item-remove"
-                onClick={() => removeItem.mutate(item.item_id)}
-                disabled={removeItem.isPending}
-              >
+              <button className="flex items-center justify-center w-8 h-8 rounded-sm text-gray-400 hover:bg-red-light hover:text-red transition-all shrink-0 disabled:opacity-50" onClick={() => removeItem.mutate(item.item_id)} disabled={removeItem.isPending}>
                 <Trash2 size={16} />
               </button>
             </div>

@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { timeAgo } from '../../lib/utils'
 import Avatar from '../../components/Avatar'
-import './StoreDetail.css'
 
 export default function StoreDetail() {
   const { id } = useParams()
@@ -39,50 +38,54 @@ export default function StoreDetail() {
 
   return (
     <div className="page">
-      <button className="back-btn" onClick={() => navigate(-1)}>
+      <button className="inline-flex items-center gap-1 text-primary text-sm font-medium mb-3 py-1" onClick={() => navigate(-1)}>
         <ArrowLeft size={18} /> Back
       </button>
 
-      <div className="store-info-card">
-        <h2 className="store-detail-name">{store.name}</h2>
+      <div className="flex flex-col gap-1.5 bg-white border border-gray-200 rounded-md px-4 py-5 shadow-sm mb-5">
+        <h2 className="text-lg font-bold text-gray-900">{store.name}</h2>
         {store.address && (
-          <span className="store-detail-address"><MapPin size={14} /> {store.address}</span>
+          <span className="inline-flex items-center gap-1 text-sm text-gray-500">
+            <MapPin size={14} /> {store.address}
+          </span>
         )}
       </div>
 
-      <section className="store-detail-section">
-        <h3 className="store-detail-section-title">Available Products ({products?.length || 0})</h3>
+      <section className="mb-6">
+        <h3 className="text-sm font-semibold text-gray-900 mb-2.5">Available Products ({products?.length || 0})</h3>
         {products?.length > 0 ? (
-          <div className="store-product-list">
+          <div className="flex flex-col gap-2">
             {products.map((p) => (
-              <div key={p.id} className="store-product-card" onClick={() => navigate(`/product/${p.product_id}`)}>
-                <div className="store-product-header">
+              <div key={p.id} className="flex flex-col gap-1.5 bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => navigate(`/product/${p.product_id}`)}>
+                <div className="flex justify-between items-start gap-3">
                   <div>
-                    <span className="store-product-name">{p.product?.name || 'Unknown'}</span>
-                    {p.product?.brand && <span className="store-product-brand">{p.product.brand}</span>}
+                    <span className="text-[0.95rem] font-semibold block text-gray-900">{p.product?.name || 'Unknown'}</span>
+                    {p.product?.brand && <span className="text-xs text-gray-500">{p.product.brand}</span>}
                   </div>
-                  <span className="store-product-price">₱{Number(p.price).toFixed(2)}</span>
+                  <span className="text-lg font-bold text-green whitespace-nowrap">₱{Number(p.price).toFixed(2)}</span>
                 </div>
-                <div className="store-product-footer">
+                <div className="flex items-center flex-wrap gap-3">
                   {p.contributor_name && (
-                    <span className="store-product-meta">
+                    <span className="inline-flex items-center gap-1 text-xs text-gray-500">
                       <Avatar src={p.contributor_avatar_url} size={18} />
                       {p.contributor_name}
                     </span>
                   )}
-                  <span className="store-product-meta">
+                  <span className="inline-flex items-center gap-1 text-xs text-gray-500">
                     <Clock size={12} /> {timeAgo(p.created_at)}
                   </span>
-                  <span className={`store-product-meta${p.confirmation_count > 0 ? ' store-product-confirmed' : ''}`}>
+                  <span className={`inline-flex items-center gap-1 text-xs ${p.confirmation_count > 0 ? 'text-green font-medium' : 'text-gray-500'}`}>
                     <Users size={12} /> {p.confirmation_count} confirmed
                   </span>
                 </div>
-                {p.is_available === false && <span className="store-product-unavailable">Unavailable</span>}
+                {p.is_available === false && (
+                  <span className="inline-block text-xs font-medium text-red bg-red-light px-2 py-0.5 rounded-full self-start">Unavailable</span>
+                )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="store-detail-empty">No products with prices at this store yet.</p>
+          <p className="text-center py-6 text-gray-400 text-sm">No products with prices at this store yet.</p>
         )}
       </section>
     </div>

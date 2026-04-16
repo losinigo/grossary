@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { MapPin, Navigation, Loader, Store } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import './StoresPage.css'
 
 export default function StoresPage() {
   const [coords, setCoords] = useState(null)
@@ -44,18 +43,18 @@ export default function StoresPage() {
   if (!coords) {
     return (
       <div className="page">
-        <h2 className="page-title">Nearby Stores</h2>
-        <p className="page-subtitle">Grocery stores in your area.</p>
-        <div className="empty-state">
-          <div className="empty-icon-ring">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Nearby Stores</h2>
+        <p className="text-sm text-gray-500 mt-1 mb-5">Grocery stores in your area.</p>
+        <div className="flex flex-col items-center text-center py-15 px-5 gap-2">
+          <div className="w-16 h-16 rounded-full bg-primary-light flex items-center justify-center">
             <MapPin size={32} color="var(--color-primary)" />
           </div>
-          <p className="empty-title">Enable location access</p>
-          <p className="empty-subtitle">Allow location access to find grocery stores near you.</p>
-          <button className="btn-primary" onClick={requestLocation} disabled={locating}>
-            {locating ? <><Loader size={16} className="spin" /> Detecting...</> : 'Allow Location'}
+          <p className="text-base font-semibold text-gray-900 mt-2">Enable location access</p>
+          <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">Allow location access to find grocery stores near you.</p>
+          <button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity disabled:opacity-50" onClick={requestLocation} disabled={locating}>
+            {locating ? <><Loader size={16} className="animate-spin" /> Detecting...</> : 'Allow Location'}
           </button>
-          {locError && <p className="loc-error">{locError}</p>}
+          {locError && <p className="text-sm text-red font-medium mt-1">{locError}</p>}
         </div>
       </div>
     )
@@ -63,38 +62,38 @@ export default function StoresPage() {
 
   return (
     <div className="page">
-      <h2 className="page-title">Nearby Stores</h2>
-      <p className="page-subtitle">
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900">Nearby Stores</h2>
+      <p className="text-sm text-gray-500 mt-1 mb-5 inline-flex items-center gap-1">
         <Navigation size={12} /> Within 25 km of your location
       </p>
 
       {isLoading && (
-        <div className="empty-state">
-          <Loader size={24} className="spin" color="var(--color-gray-400)" />
-          <p className="empty-subtitle">Finding stores...</p>
+        <div className="flex flex-col items-center text-center py-15 px-5 gap-2">
+          <Loader size={24} className="animate-spin" color="var(--color-gray-400)" />
+          <p className="text-sm text-gray-500">Finding stores...</p>
         </div>
       )}
 
       {!isLoading && stores?.length === 0 && (
-        <div className="empty-state">
+        <div className="flex flex-col items-center text-center py-15 px-5 gap-2">
           <Store size={48} color="var(--color-gray-300)" strokeWidth={1.2} />
-          <p className="empty-title">No stores nearby</p>
-          <p className="empty-subtitle">Be the first to add a grocery store in your area!</p>
+          <p className="text-base font-semibold text-gray-900 mt-2">No stores nearby</p>
+          <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">Be the first to add a grocery store in your area!</p>
         </div>
       )}
 
       {stores?.length > 0 && (
-        <div className="store-list">
+        <div className="flex flex-col gap-2 mt-3">
           {stores.map((s) => (
-            <div key={s.id} className="store-card store-card-link" onClick={() => navigate(`/stores/${s.id}`)}>
-              <div className="store-icon">
+            <div key={s.id} className="flex items-center gap-3 bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => navigate(`/stores/${s.id}`)}>
+              <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-gray-100 text-gray-500 shrink-0">
                 <Store size={20} />
               </div>
-              <div className="store-info">
-                <span className="store-name">{s.name}</span>
-                {s.address && <span className="store-address">{s.address}</span>}
+              <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                <span className="text-[0.95rem] font-semibold">{s.name}</span>
+                {s.address && <span className="text-xs text-gray-500 truncate">{s.address}</span>}
               </div>
-              <span className="store-distance">{s.distance_km} km</span>
+              <span className="text-sm font-semibold text-primary whitespace-nowrap">{s.distance_km} km</span>
             </div>
           ))}
         </div>
