@@ -1,9 +1,14 @@
+/**
+ * ShoppingListsPage — Displays the user's shopping lists with progress bars,
+ * estimated totals, and a modal to create new lists.
+ */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, ShoppingCart, Trash2, CheckCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import EmptyState from '../../components/ui/EmptyState'
 
 const inputCls = 'w-full px-4 py-3 bg-white border border-gray-200 rounded-sm text-[0.95rem] text-gray-900 outline-none focus:border-primary font-[inherit] placeholder:text-gray-400 mb-3'
 
@@ -15,6 +20,8 @@ export default function ShoppingListsPage() {
   const [newListName, setNewListName] = useState('')
   const [newListDescription, setNewListDescription] = useState('')
   const [creating, setCreating] = useState(false)
+
+  /* ── Queries ─────────────────────────────────────────────── */
 
   const { data: lists, isLoading } = useQuery({
     queryKey: ['shopping-lists', user?.id],
@@ -30,6 +37,8 @@ export default function ShoppingListsPage() {
     },
     enabled: !!user,
   })
+
+  /* ── Mutations ───────────────────────────────────────────── */
 
   const createList = useMutation({
     mutationFn: async ({ name, description }) => {
@@ -47,6 +56,8 @@ export default function ShoppingListsPage() {
     onError: () => alert('Failed to delete list. Please try again.'),
   })
 
+  /* ── Handlers ────────────────────────────────────────────── */
+
   const handleCreateList = async (e) => {
     e.preventDefault()
     if (!newListName.trim()) return
@@ -59,17 +70,19 @@ export default function ShoppingListsPage() {
     if (confirm('Delete this shopping list?')) deleteList.mutate(listId)
   }
 
+  /* ── Render ──────────────────────────────────────────────── */
+
   if (authLoading) return <div className="page"><p>Loading...</p></div>
 
   if (!user) {
     return (
       <div className="page">
-        <div className="flex flex-col items-center text-center py-15 px-5 gap-2">
-          <ShoppingCart size={48} color="var(--color-gray-300)" strokeWidth={1.2} />
-          <p className="text-base font-semibold text-gray-900 mt-2">Sign in to create shopping lists</p>
-          <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">Keep track of what you need to buy and compare prices.</p>
-          <button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full" onClick={signInWithGoogle}>Sign in with Google</button>
-        </div>
+        <EmptyState
+          icon={<ShoppingCart size={48} color="var(--color-gray-300)" strokeWidth={1.2} />}
+          title="Sign in to create shopping lists"
+          message="Keep track of what you need to buy and compare prices."
+          action={<button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full" onClick={signInWithGoogle}>Sign in with Google</button>}
+        />
       </div>
     )
   }
@@ -80,6 +93,7 @@ export default function ShoppingListsPage() {
         <h2 className="text-2xl font-bold tracking-tight text-gray-900">Shopping Lists</h2>
       </div>
 
+      {/* Create list modal */}
       {showCreateForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-5">
           <form className="bg-white rounded-lg p-6 w-full max-w-[400px] shadow-lg" onSubmit={handleCreateList}>
@@ -97,14 +111,16 @@ export default function ShoppingListsPage() {
       {isLoading && <p className="text-center py-10 text-gray-500 text-sm">Loading your lists...</p>}
 
       {!isLoading && lists?.length === 0 && (
-        <div className="flex flex-col items-center text-center py-15 px-5 gap-2">
-          <ShoppingCart size={48} color="var(--color-gray-300)" strokeWidth={1.2} />
-          <p className="text-base font-semibold text-gray-900 mt-2">No shopping lists yet</p>
-          <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">Create your first list to start organizing your grocery shopping.</p>
-          <button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full" onClick={() => setShowCreateForm(true)}>
-            <Plus size={18} /> Create Your First List
-          </button>
-        </div>
+        <EmptyState
+          icon={<ShoppingCart size={48} color="var(--color-gray-300)" strokeWidth={1.2} />}
+          title="No shopping lists yet"
+          message="Create your first list to start organizing your grocery shopping."
+          action={
+            <button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full" onClick={() => setShowCreateForm(true)}>
+              <Plus size={18} /> Create Your First List
+            </button>
+          }
+        />
       )}
 
       {lists?.length > 0 && (
@@ -146,6 +162,8 @@ export default function ShoppingListsPage() {
               )}
             </div>
           ))}
+
+          {/* Create new list card */}
           <div className="flex flex-col items-center justify-center bg-white border-2 border-dashed border-gray-300 rounded-lg py-10 px-5 cursor-pointer min-h-[140px] hover:border-primary hover:bg-primary-light transition-all group" onClick={() => setShowCreateForm(true)}>
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 text-gray-500 mb-3 group-hover:bg-primary group-hover:text-white transition-all"><Plus size={24} /></div>
             <span className="text-sm font-medium text-gray-500 group-hover:text-primary transition-colors">Create New List</span>

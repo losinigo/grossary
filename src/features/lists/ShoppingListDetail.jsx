@@ -1,20 +1,34 @@
+/**
+ * ShoppingListDetail — Manages items in a single shopping list.
+ * Supports adding products, adjusting quantities, toggling completion,
+ * and switching between price estimation modes (optimized, near me, specific store).
+ */
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Check, X, Trash2, Minus, MapPin, Pencil } from 'lucide-react'
+import { Plus, Check, Trash2, Minus, MapPin, Pencil } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import useProductSearch from '../../lib/hooks/useProductSearch'
+import useStoreList from '../../lib/hooks/useStoreList'
+import BackButton from '../../components/ui/BackButton'
+import ProductSearchInput from '../../components/ui/ProductSearchInput'
 
 const inputCls = 'w-full px-4 py-3 bg-white border border-gray-200 rounded-sm text-[0.95rem] text-gray-900 outline-none focus:border-primary font-[inherit] placeholder:text-gray-400'
-const backBtn = 'inline-flex items-center gap-1 text-primary text-sm font-medium mb-3 py-1'
 const btnPrimary = 'inline-flex items-center justify-center gap-2 flex-1 py-2.5 px-5 bg-primary text-white text-sm font-semibold rounded-sm hover:opacity-88 transition-opacity disabled:opacity-50'
 const btnSecondary = 'inline-flex items-center justify-center gap-2 flex-1 py-2.5 px-5 bg-gray-100 text-gray-700 text-sm font-medium rounded-sm hover:bg-gray-200 transition-colors'
+
+const MODE_LABELS = { near_me: 'Near Me', specific_store: 'Specific Store', optimized: 'Optimized' }
+const MODE_DESCS = { near_me: 'Average prices from nearby stores', specific_store: 'Prices from selected store only', optimized: 'Best deals from different stores' }
 
 export default function ShoppingListDetail() {
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+
+  /* ── Local state ─────────────────────────────────────────── */
+
   const [showAddItem, setShowAddItem] = useState(false)
   const [productSearch, setProductSearch] = useState('')
   const [selectedProduct, setSelectedProduct] = useState(null)
@@ -26,6 +40,8 @@ export default function ShoppingListDetail() {
   const [editingTitle, setEditingTitle] = useState(false)
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
+
+  /* ── Queries ─────────────────────────────────────────────── */
 
   const { data: list, isLoading: listLoading } = useQuery({
     queryKey: ['shopping-list', id, estimationMode, selectedStoreId],
@@ -39,18 +55,15 @@ export default function ShoppingListDetail() {
     enabled: !!id,
   })
 
-  const { data: stores } = useQuery({
-    queryKey: ['stores-list'],
-    queryFn: async () => { const { data } = await supabase.from('stores').select('id, name, address').order('name'); return data || [] },
-  })
+  const { data: stores } = useStoreList()
+  const { data: products } = useProductSearch(productSearch)
 
-  const { data: products } = useQuery({
-    queryKey: ['products-search', productSearch],
-    queryFn: async () => { if (!productSearch.trim()) return []; const { data } = await supabase.from('products').select('id, name, brand, unit_type, unit_name, unit_abbreviation').or(`name.ilike.%${productSearch}%,brand.ilike.%${productSearch}%,barcode.eq.${productSearch}`).limit(10); return data || [] },
-    enabled: productSearch.length > 1,
-  })
+  /* ── Mutations ───────────────────────────────────────────── */
 
-  const invalidateList = () => { queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] }); queryClient.invalidateQueries({ queryKey: ['shopping-list', id] }) }
+  const invalidateList = () => {
+    queryClient.invalidateQueries({ queryKey: ['shopping-list-items', id] })
+    queryClient.invalidateQueries({ queryKey: ['shopping-list', id] })
+  }
 
   const updateList = useMutation({
     mutationFn: async ({ name, description }) => { const { error } = await supabase.from('shopping_lists').update({ name, description: description || null }).eq('id', id); if (error) throw error },
@@ -79,22 +92,30 @@ export default function ShoppingListDetail() {
     onSuccess: invalidateList, onError: () => alert('Failed to remove item.'),
   })
 
+  /* ── Handlers ────────────────────────────────────────────── */
+
   const handleAddItem = async (e) => { e.preventDefault(); if (!selectedProduct || !quantity) return; setAdding(true); try { await addItem.mutateAsync({ productId: selectedProduct.id, quantity, notes }) } finally { setAdding(false) } }
-  const handleProductSelect = (product) => { setSelectedProduct(product); setProductSearch(`${product.name}${product.brand ? ` (${product.brand})` : ''}`); if (product.unit_type === 'piece') setQuantity('1') }
+
+  const handleProductSelect = (product) => {
+    setSelectedProduct(product)
+    setProductSearch(`${product.name}${product.brand ? ` (${product.brand})` : ''}`)
+    if (product.unit_type === 'piece') setQuantity('1')
+  }
+
   const handleModeChange = (mode) => { setEstimationMode(mode); if (mode !== 'specific_store') setSelectedStoreId(null) }
   const handleEditOpen = () => { setEditName(list.list_name); setEditDescription(list.list_description || ''); setEditingTitle(true) }
   const handleEditSave = (e) => { e.preventDefault(); if (!editName.trim()) return; updateList.mutate({ name: editName.trim(), description: editDescription.trim() }) }
 
-  const modeLabels = { near_me: 'Near Me', specific_store: 'Specific Store', optimized: 'Optimized' }
-  const modeDescs = { near_me: 'Average prices from nearby stores', specific_store: 'Prices from selected store only', optimized: 'Best deals from different stores' }
+  /* ── Render ──────────────────────────────────────────────── */
 
   if (listLoading) return <div className="page"><p>Loading...</p></div>
   if (!list) return <div className="page"><p>List not found.</p></div>
 
   return (
     <div className="page">
-      <button className={backBtn} onClick={() => navigate('/lists')}><ArrowLeft size={18} /> Back to Lists</button>
+      <BackButton onClick={() => navigate('/lists')} label="Back to Lists" />
 
+      {/* List header + estimation mode */}
       <div className="flex flex-col gap-1 bg-white border border-gray-200 rounded-md px-4 py-5 shadow-sm mb-5">
         <div className="flex-1 min-w-0">
           {editingTitle ? (
@@ -114,15 +135,16 @@ export default function ShoppingListDetail() {
           )}
           {!editingTitle && list.list_description && <p className="text-sm text-gray-500 leading-relaxed mb-4">{list.list_description}</p>}
 
+          {/* Estimation mode tabs */}
           <div className="mb-4">
             <div className="flex gap-2 mb-2">
               {['optimized', 'near_me', 'specific_store'].map((mode) => (
                 <button key={mode} className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-sm text-center transition-all ${estimationMode === mode ? 'bg-primary text-white font-semibold' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`} onClick={() => handleModeChange(mode)}>
-                  {modeLabels[mode]}
+                  {MODE_LABELS[mode]}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-500 text-center">{modeDescs[estimationMode]}</p>
+            <p className="text-xs text-gray-500 text-center">{MODE_DESCS[estimationMode]}</p>
           </div>
 
           {estimationMode === 'specific_store' && (
@@ -149,27 +171,27 @@ export default function ShoppingListDetail() {
         </div>
       </div>
 
+      {/* Add item button */}
       <div className="mb-5">
         <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-sm hover:opacity-88 transition-opacity" onClick={() => setShowAddItem(true)}>
           <Plus size={18} /> Add Item
         </button>
       </div>
 
+      {/* Add item form */}
       {showAddItem && (
         <div className="bg-white border border-gray-200 rounded-lg p-5 mb-5 shadow-sm">
           <form onSubmit={handleAddItem}>
-            <div className="relative mb-4">
-              <input className={inputCls} value={productSearch} onChange={(e) => { setProductSearch(e.target.value); setSelectedProduct(null) }} placeholder="Search for a product..." autoFocus />
-              {products?.length > 0 && !selectedProduct && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-sm shadow-md mt-1 overflow-hidden z-10">
-                  {products.map((p) => (
-                    <button key={p.id} type="button" className="block w-full px-4 py-3 text-left text-sm border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors" onClick={() => handleProductSelect(p)}>
-                      {p.name} {p.brand && <span className="text-gray-500">— {p.brand}</span>}
-                      {p.unit_type !== 'piece' && <span className="text-gray-500"> • per {p.unit_abbreviation}</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="mb-4">
+              <ProductSearchInput
+                value={productSearch}
+                onChange={(val) => { setProductSearch(val); setSelectedProduct(null) }}
+                onSelect={handleProductSelect}
+                results={products || []}
+                showDropdown={!selectedProduct}
+                placeholder="Search for a product..."
+                label=""
+              />
             </div>
             {selectedProduct && (
               <>
@@ -196,20 +218,24 @@ export default function ShoppingListDetail() {
         </div>
       )}
 
+      {/* Item list */}
       {items?.length > 0 && (
         <div className="flex flex-col gap-2">
           {items.map((item) => (
             <div key={item.item_id} className={`flex items-center gap-3 bg-white border border-gray-200 rounded-md px-4 py-4 shadow-sm transition-all ${item.is_completed ? 'opacity-60 bg-gray-50' : ''}`}>
+              {/* Toggle completion */}
               <button className="flex items-center justify-center w-6 h-6 rounded-sm bg-primary text-white shrink-0 disabled:opacity-50 transition-all" onClick={() => toggleItem.mutate({ itemId: item.item_id, completed: !item.is_completed })} disabled={toggleItem.isPending}>
                 {item.is_completed ? <Check size={16} /> : <div className="w-6 h-6 border-2 border-gray-300 rounded-sm bg-white" />}
               </button>
 
+              {/* Quantity stepper */}
               <div className="flex flex-col items-center gap-0.5 shrink-0">
                 <button className="flex items-center justify-center w-[26px] h-5 rounded-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shrink-0 disabled:opacity-40" onClick={() => { const step = item.unit_type === 'weight' ? 0.1 : 1; updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat((parseFloat(item.quantity) + step).toFixed(2)) }) }} disabled={updateQuantity.isPending}><Plus size={14} /></button>
                 <input className="w-9 text-center py-0.5 border border-gray-200 rounded-sm text-[0.8rem] font-semibold text-primary bg-white outline-none focus:border-primary font-[inherit] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" type="number" min="0" step={item.unit_type === 'weight' ? '0.1' : '1'} value={item.quantity} onChange={(e) => { const val = parseFloat(e.target.value); if (!isNaN(val) && val > 0) updateQuantity.mutate({ itemId: item.item_id, quantity: val }) }} />
                 <button className="flex items-center justify-center w-[26px] h-5 rounded-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shrink-0 disabled:opacity-40" onClick={() => { const step = item.unit_type === 'weight' ? 0.1 : 1; updateQuantity.mutate({ itemId: item.item_id, quantity: parseFloat(Math.max(step, parseFloat(item.quantity) - step).toFixed(2)) }) }} disabled={updateQuantity.isPending}><Minus size={14} /></button>
               </div>
 
+              {/* Product info */}
               <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                 <div className={`text-[0.95rem] font-medium text-gray-900 truncate min-w-0 ${item.is_completed ? 'line-through' : ''}`}>
                   {item.product_name}{item.product_brand && <span className="text-gray-500 font-normal"> ({item.product_brand})</span>}
@@ -220,6 +246,7 @@ export default function ShoppingListDetail() {
                 </div>
               </div>
 
+              {/* Price */}
               <div className="shrink-0 flex flex-col items-end gap-0.5">
                 {item.has_price_data ? (
                   <>
@@ -231,6 +258,7 @@ export default function ShoppingListDetail() {
                 )}
               </div>
 
+              {/* Remove */}
               <button className="flex items-center justify-center w-8 h-8 rounded-sm text-gray-400 hover:bg-red-light hover:text-red transition-all shrink-0 disabled:opacity-50" onClick={() => removeItem.mutate(item.item_id)} disabled={removeItem.isPending}>
                 <Trash2 size={16} />
               </button>

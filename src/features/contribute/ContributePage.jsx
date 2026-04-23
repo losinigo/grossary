@@ -1,6 +1,11 @@
+/**
+ * ContributePage — Hub for all contribution actions: add items, prices, stores, or confirm prices.
+ * Requires authentication; shows a sign-in prompt for unauthenticated users.
+ */
 import { useNavigate, useLocation } from 'react-router-dom'
 import { PackagePlus, DollarSign, ShieldCheck, StoreIcon, LogIn } from 'lucide-react'
 import { useAuth } from '../../lib/hooks/useAuth'
+import EmptyState from '../../components/ui/EmptyState'
 
 const actions = [
   { icon: PackagePlus, label: 'Add New Item', desc: 'Scan or enter a new grocery product', path: '/contribute/item' },
@@ -12,22 +17,23 @@ const actions = [
 export default function ContributePage() {
   const { user, loading, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
-  const success = location.state?.success
+  const success = useLocation().state?.success
 
   if (loading) return <div className="page"><p>Loading...</p></div>
 
   if (!user) {
     return (
       <div className="page">
-        <div className="flex flex-col items-center text-center py-15 px-5 gap-2">
-          <LogIn size={48} color="var(--color-gray-300)" strokeWidth={1.2} />
-          <p className="text-base font-semibold text-gray-900 mt-2">Sign in to contribute</p>
-          <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">Help your community by sharing grocery prices and availability.</p>
-          <button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity" onClick={signInWithGoogle}>
-            Sign in with Google
-          </button>
-        </div>
+        <EmptyState
+          icon={<LogIn size={48} color="var(--color-gray-300)" strokeWidth={1.2} />}
+          title="Sign in to contribute"
+          message="Help your community by sharing grocery prices and availability."
+          action={
+            <button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity" onClick={signInWithGoogle}>
+              Sign in with Google
+            </button>
+          }
+        />
       </div>
     )
   }

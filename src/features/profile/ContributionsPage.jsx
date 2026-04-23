@@ -1,9 +1,14 @@
+/**
+ * ContributionsPage — Breakdown of the current user's contributions:
+ * items added, stores added, prices reported, and prices confirmed.
+ */
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, PackagePlus, StoreIcon, DollarSign, ShieldCheck } from 'lucide-react'
+import { PackagePlus, StoreIcon, DollarSign, ShieldCheck } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { timeAgo } from '../../lib/utils'
+import BackButton from '../../components/ui/BackButton'
 
 export default function ContributionsPage() {
   const { user } = useAuth()
@@ -28,6 +33,8 @@ export default function ContributionsPage() {
     enabled: !!user,
   })
 
+  /* ── Render ──────────────────────────────────────────────── */
+
   if (isLoading) return <div className="page"><p>Loading...</p></div>
 
   const sections = [
@@ -39,9 +46,7 @@ export default function ContributionsPage() {
 
   return (
     <div className="page">
-      <button className="inline-flex items-center gap-1 text-primary text-sm font-medium mb-3 py-1" onClick={() => navigate('/profile')}>
-        <ArrowLeft size={18} /> Back
-      </button>
+      <BackButton onClick={() => navigate('/profile')} />
       <h2 className="text-2xl font-bold tracking-tight text-gray-900">My Contributions</h2>
       <p className="text-sm text-gray-500 mt-1 mb-5">Breakdown of everything you've contributed.</p>
 

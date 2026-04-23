@@ -1,10 +1,16 @@
+/**
+ * AddItem — Form to add a new grocery product with name, brand, barcode, and unit type.
+ * Supports barcode scanning via the device camera.
+ */
 import { useState, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, ScanBarcode } from 'lucide-react'
+import { ScanBarcode } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
 import BarcodeScanner from '../../components/BarcodeScanner'
+import BackButton from '../../components/ui/BackButton'
 
+/** Predefined unit options grouped by type */
 const UNIT_PRESETS = {
   piece: { name: 'piece', abbreviation: 'pc' },
   weight: { kilogram: { name: 'kilogram', abbreviation: 'kg' }, gram: { name: 'gram', abbreviation: 'g' }, pound: { name: 'pound', abbreviation: 'lb' } },
@@ -29,6 +35,8 @@ export default function AddItem() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  /* ── Handlers ────────────────────────────────────────────── */
+
   const handleScan = useCallback((code) => { setBarcode(code); setScanning(false) }, [])
 
   const handleUnitTypeChange = (type) => {
@@ -37,7 +45,10 @@ export default function AddItem() {
     else { const first = Object.keys(UNIT_PRESETS[type])[0]; setUnitName(first); setUnitAbbreviation(UNIT_PRESETS[type][first].abbreviation) }
   }
 
-  const handleUnitChange = (unit) => { setUnitName(unit); setUnitAbbreviation(UNIT_PRESETS[unitType][unit].abbreviation) }
+  const handleUnitChange = (unit) => {
+    setUnitName(unit)
+    setUnitAbbreviation(UNIT_PRESETS[unitType][unit].abbreviation)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -48,15 +59,18 @@ export default function AddItem() {
     else navigate('/contribute', { state: { success: 'Item added!' } })
   }
 
+  /* ── Render ──────────────────────────────────────────────── */
+
   return (
     <div className="page">
-      <button className="inline-flex items-center gap-1 text-primary text-sm font-medium mb-3 py-1" onClick={() => navigate('/contribute')}><ArrowLeft size={18} /> Back</button>
+      <BackButton onClick={() => navigate('/contribute')} />
       <h2 className="text-2xl font-bold tracking-tight text-gray-900">Add New Item</h2>
       <p className="text-sm text-gray-500 mt-1 mb-5">Add a grocery product to the database.</p>
 
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <label className={labelCls}>Item Name *<input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Whole Milk 1L" /></label>
         <label className={labelCls}>Brand<input className={inputCls} value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="e.g. Alaska" /></label>
+
         <label className={labelCls}>Unit Type *
           <select className={selectCls} value={unitType} onChange={(e) => handleUnitTypeChange(e.target.value)}>
             <option value="piece">Individual Items (pieces, bottles, etc.)</option>
@@ -64,6 +78,7 @@ export default function AddItem() {
             <option value="volume">Sold by Volume (liquids, etc.)</option>
           </select>
         </label>
+
         {unitType !== 'piece' && (
           <label className={labelCls}>Unit
             <select className={selectCls} value={unitName} onChange={(e) => handleUnitChange(e.target.value)}>
@@ -71,6 +86,7 @@ export default function AddItem() {
             </select>
           </label>
         )}
+
         <label className={labelCls}>
           Barcode {unitType === 'piece' ? '' : '(optional for weighted items)'}
           <div className="flex items-center gap-2">
@@ -78,9 +94,11 @@ export default function AddItem() {
             <button type="button" className="flex items-center justify-center w-[42px] h-[42px] rounded-sm text-primary bg-primary-light shrink-0 hover:opacity-80 transition-opacity" onClick={() => setScanning(true)}><ScanBarcode size={20} /></button>
           </div>
         </label>
+
         {error && <p className="text-sm text-red font-medium">{error}</p>}
         <button type="submit" className="w-full px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity disabled:opacity-50" disabled={submitting}>{submitting ? 'Adding...' : 'Add Item'}</button>
       </form>
+
       {scanning && <BarcodeScanner onScan={handleScan} onClose={() => setScanning(false)} />}
     </div>
   )

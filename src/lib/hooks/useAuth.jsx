@@ -1,3 +1,10 @@
+/**
+ * useAuth — Authentication context provider and hook.
+ * Manages Google OAuth sign-in/sign-out via Supabase and exposes
+ * the current user object to the entire component tree.
+ *
+ * Usage: const { user, loading, signInWithGoogle, signOut } = useAuth()
+ */
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 

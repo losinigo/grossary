@@ -1,8 +1,13 @@
+/**
+ * MemberProfile — Public profile page for a community member.
+ * Shows avatar, stats (reputation, followers, following), and follow/unfollow actions.
+ */
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, TrendingUp, Users, UserPlus, UserMinus, User } from 'lucide-react'
+import { TrendingUp, Users, UserPlus, UserMinus, User } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import BackButton from '../../components/ui/BackButton'
 
 export default function MemberProfile() {
   const { id } = useParams()
@@ -10,6 +15,8 @@ export default function MemberProfile() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const isOwnProfile = user?.id === id
+
+  /* ── Queries ─────────────────────────────────────────────── */
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['member-profile', id],
@@ -23,40 +30,32 @@ export default function MemberProfile() {
   const { data: isFollowing } = useQuery({
     queryKey: ['is-following', id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('follows')
-        .select('id')
-        .eq('follower_id', user.id)
-        .eq('following_id', id)
-        .maybeSingle()
+      const { data } = await supabase.from('follows').select('id').eq('follower_id', user.id).eq('following_id', id).maybeSingle()
       return !!data
     },
     enabled: !!user && !isOwnProfile,
   })
 
+  /* ── Mutations ───────────────────────────────────────────── */
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['is-following', id] })
+    queryClient.invalidateQueries({ queryKey: ['member-profile', id] })
+  }
+
   const followMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from('follows').insert({ follower_id: user.id, following_id: id })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['is-following', id] })
-      queryClient.invalidateQueries({ queryKey: ['member-profile', id] })
-    },
+    mutationFn: async () => { const { error } = await supabase.from('follows').insert({ follower_id: user.id, following_id: id }); if (error) throw error },
+    onSuccess: invalidate,
     onError: () => alert('Failed to follow. Please try again.'),
   })
 
   const unfollowMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from('follows').delete().eq('follower_id', user.id).eq('following_id', id)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['is-following', id] })
-      queryClient.invalidateQueries({ queryKey: ['member-profile', id] })
-    },
+    mutationFn: async () => { const { error } = await supabase.from('follows').delete().eq('follower_id', user.id).eq('following_id', id); if (error) throw error },
+    onSuccess: invalidate,
     onError: () => alert('Failed to unfollow. Please try again.'),
   })
+
+  /* ── Render ──────────────────────────────────────────────── */
 
   if (isLoading) return <div className="page"><p>Loading...</p></div>
   if (!profile) return <div className="page"><p>User not found.</p></div>
@@ -69,10 +68,9 @@ export default function MemberProfile() {
 
   return (
     <div className="page">
-      <button className="inline-flex items-center gap-1 text-primary text-sm font-medium mb-3 py-1" onClick={() => navigate(-1)}>
-        <ArrowLeft size={18} /> Back
-      </button>
+      <BackButton onClick={() => navigate(-1)} />
 
+      {/* Avatar + name */}
       <div className="flex flex-col items-center gap-2 pt-8 pb-6">
         {profile.avatar_url ? (
           <img src={profile.avatar_url} alt="" className="w-16 h-16 rounded-full object-cover" referrerPolicy="no-referrer" />
@@ -86,31 +84,23 @@ export default function MemberProfile() {
           Member since {new Date(profile.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
         </p>
 
+        {/* Follow / Unfollow */}
         {user && !isOwnProfile && (
           <div className="flex justify-center mt-4">
             {isFollowing ? (
-              <button
-                className="inline-flex items-center gap-2 px-7 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50"
-                onClick={() => unfollowMutation.mutate()}
-                disabled={unfollowMutation.isPending}
-              >
-                <UserMinus size={16} />
-                {unfollowMutation.isPending ? 'Unfollowing...' : 'Unfollow'}
+              <button className="inline-flex items-center gap-2 px-7 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50" onClick={() => unfollowMutation.mutate()} disabled={unfollowMutation.isPending}>
+                <UserMinus size={16} /> {unfollowMutation.isPending ? 'Unfollowing...' : 'Unfollow'}
               </button>
             ) : (
-              <button
-                className="inline-flex items-center gap-2 px-7 py-2.5 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity disabled:opacity-50"
-                onClick={() => followMutation.mutate()}
-                disabled={followMutation.isPending}
-              >
-                <UserPlus size={16} />
-                {followMutation.isPending ? 'Following...' : 'Follow'}
+              <button className="inline-flex items-center gap-2 px-7 py-2.5 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity disabled:opacity-50" onClick={() => followMutation.mutate()} disabled={followMutation.isPending}>
+                <UserPlus size={16} /> {followMutation.isPending ? 'Following...' : 'Follow'}
               </button>
             )}
           </div>
         )}
       </div>
 
+      {/* Stats grid */}
       <div className="grid grid-cols-3 gap-2.5 mt-2">
         {stats.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex flex-col items-center gap-1 bg-white border border-gray-200 rounded-md py-4 px-2 shadow-sm">

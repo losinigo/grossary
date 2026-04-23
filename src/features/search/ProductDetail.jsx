@@ -1,38 +1,32 @@
+/**
+ * ProductDetail — Shows a product's info, current prices at different stores,
+ * and full price history. Users can confirm or deny reported prices.
+ */
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, Clock, Users, CheckCircle, XCircle } from 'lucide-react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Clock } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { timeAgo } from '../../lib/utils'
+import useConfirmPrice from '../../lib/hooks/useConfirmPrice'
+import useMyConfirmations from '../../lib/hooks/useMyConfirmations'
 import Avatar from '../../components/Avatar'
-
-const meta = 'inline-flex items-center gap-1 text-xs text-gray-500'
-const confirmBase = 'inline-flex items-center gap-1.5 flex-1 justify-center py-2 px-3 text-[0.82rem] font-semibold rounded-sm transition-opacity disabled:opacity-50'
+import BackButton from '../../components/ui/BackButton'
+import PriceCard from '../../components/ui/PriceCard'
 
 export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const queryClient = useQueryClient()
 
-  const confirmMutation = useMutation({
-    mutationFn: async ({ priceId, confirmed }) => {
-      const { error } = await supabase.from('confirmations').upsert({ price_id: priceId, user_id: user.id, confirmed }, { onConflict: 'price_id,user_id' })
-      if (error) throw error
-    },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['product-prices', id] }); queryClient.invalidateQueries({ queryKey: ['my-confirmations', id] }) },
-    onError: () => alert('Failed to submit. Please try again.'),
-  })
-
-  const { data: myConfirmations } = useQuery({
-    queryKey: ['my-confirmations', id],
-    queryFn: async () => { const { data } = await supabase.from('confirmations').select('price_id, confirmed').eq('user_id', user.id); return data ? Object.fromEntries(data.map((c) => [c.price_id, c.confirmed])) : {} },
-    enabled: !!user,
-  })
+  /* ── Queries ─────────────────────────────────────────────── */
 
   const { data: product, isLoading: productLoading } = useQuery({
     queryKey: ['product', id],
-    queryFn: async () => { const { data } = await supabase.from('products').select('*').eq('id', id).single(); return data },
+    queryFn: async () => {
+      const { data } = await supabase.from('products').select('*').eq('id', id).single()
+      return data
+    },
   })
 
   const { data: currentPrices } = useQuery({
@@ -57,51 +51,44 @@ export default function ProductDetail() {
     enabled: !!id,
   })
 
+  const { data: myConfirmations } = useMyConfirmations(user?.id, id)
+
+  const confirmMutation = useConfirmPrice(user?.id, [
+    ['product-prices', id],
+    ['my-confirmations', id],
+  ])
+
+  /* ── Render ──────────────────────────────────────────────── */
+
   if (productLoading) return <div className="page"><p>Loading...</p></div>
   if (!product) return <div className="page"><p>Product not found.</p></div>
 
   return (
     <div className="page">
-      <button className="inline-flex items-center gap-1 text-primary text-sm font-medium mb-3 py-1" onClick={() => navigate(-1)}>
-        <ArrowLeft size={18} /> Back
-      </button>
+      <BackButton onClick={() => navigate(-1)} />
 
+      {/* Product info */}
       <div className="flex flex-col gap-1 bg-white border border-gray-200 rounded-md px-4 py-5 shadow-sm mb-5">
         <h2 className="text-lg font-bold text-gray-900">{product.name}</h2>
         {product.brand && <span className="text-sm text-gray-500 font-medium">{product.brand}</span>}
         {product.barcode && <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded-sm self-start mt-1">{product.barcode}</span>}
       </div>
 
+      {/* Current prices */}
       <section className="mb-6">
         <h3 className="text-sm font-semibold text-gray-900 mb-2.5">Current Prices</h3>
         {currentPrices?.length > 0 ? (
           <div className="flex flex-col gap-2">
             {currentPrices.map((p) => (
-              <div key={p.id} className="flex flex-col gap-1.5 bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-green">₱{Number(p.price).toFixed(2)}</span>
-                  <span className="text-xs text-gray-500">{timeAgo(p.created_at)}</span>
-                </div>
-                {p.store && <span className="inline-flex items-center gap-1 text-xs text-gray-500"><MapPin size={13} /> {p.store.name}{p.store.address ? ` — ${p.store.address}` : ''}</span>}
-                <div className="flex items-center gap-3">
-                  {p.contributor_name && <span className={meta}><Avatar src={p.contributor_avatar_url} size={18} />{p.contributor_name}</span>}
-                  <span className={`${meta} ${p.confirmation_count > 0 ? '!text-green !font-medium' : ''}`}><Users size={13} /> {p.confirmation_count} confirmed</span>
-                </div>
-                {p.is_available === false && <span className="inline-block text-xs font-medium text-red bg-red-light px-2 py-0.5 rounded-full self-start">Marked unavailable</span>}
-                {user && user.id !== p.user_id && (() => {
-                  const status = myConfirmations?.[p.id]
-                  return (
-                    <div className="flex gap-2 mt-1">
-                      <button className={`${confirmBase} ${status === true ? 'bg-green-light text-green font-bold shadow-[inset_0_0_0_2px_currentColor]' : status === false ? 'opacity-35 bg-gray-100 text-gray-400' : 'bg-green-light text-green'}`} onClick={() => confirmMutation.mutate({ priceId: p.id, confirmed: true })} disabled={confirmMutation.isPending}>
-                        <CheckCircle size={16} /> {status === true ? 'Confirmed' : 'Confirm'}
-                      </button>
-                      <button className={`${confirmBase} ${status === false ? 'bg-red-light text-red font-bold shadow-[inset_0_0_0_2px_currentColor]' : status === true ? 'opacity-35 bg-gray-100 text-gray-400' : 'bg-red-light text-red'}`} onClick={() => confirmMutation.mutate({ priceId: p.id, confirmed: false })} disabled={confirmMutation.isPending}>
-                        <XCircle size={16} /> {status === false ? 'Denied' : 'Deny'}
-                      </button>
-                    </div>
-                  )
-                })()}
-              </div>
+              <PriceCard
+                key={p.id}
+                price={p}
+                myConfirmations={myConfirmations}
+                currentUserId={user?.id}
+                onConfirm={confirmMutation.mutate}
+                onDeny={confirmMutation.mutate}
+                isPending={confirmMutation.isPending}
+              />
             ))}
           </div>
         ) : (
@@ -112,6 +99,7 @@ export default function ProductDetail() {
         </button>
       </section>
 
+      {/* Price history */}
       <section className="mb-6">
         <h3 className="text-sm font-semibold text-gray-900 mb-2.5">Price History</h3>
         {priceHistory?.length > 0 ? (

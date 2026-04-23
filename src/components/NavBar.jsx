@@ -1,3 +1,7 @@
+/**
+ * NavBar — Fixed bottom tab bar with five navigation tabs:
+ * Search, Add, Lists, Community, and Profile.
+ */
 import { NavLink } from 'react-router-dom'
 import { Search, PlusCircle, Users, User, ShoppingCart } from 'lucide-react'
 

@@ -1,3 +1,8 @@
+/**
+ * Layout — App shell that wraps every page.
+ * Provides a sticky header with the app name and user avatar,
+ * a scrollable content area (<Outlet />), and the bottom NavBar.
+ */
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../lib/hooks/useAuth'
 import NavBar from './NavBar'

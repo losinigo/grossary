@@ -1,3 +1,10 @@
+/**
+ * BarcodeScanner — Full-screen camera overlay that detects barcodes using Quagga2.
+ * Supports EAN, UPC, Code 128, and Code 39 formats.
+ *
+ * @param {function} onScan  – called with the decoded barcode string
+ * @param {function} onClose – called when the user dismisses the scanner
+ */
 import { useEffect, useRef, useCallback } from 'react'
 import Quagga from '@ericblade/quagga2'
 import { X } from 'lucide-react'

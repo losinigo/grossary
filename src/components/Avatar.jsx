@@ -1,3 +1,9 @@
+/**
+ * Avatar — Displays a user's profile image or a generic placeholder icon.
+ *
+ * @param {string} [src]  – image URL (falls back to a gray User icon)
+ * @param {number} [size] – pixel dimensions (default 18)
+ */
 import { User } from 'lucide-react'
 
 export default function Avatar({ src, size = 18 }) {

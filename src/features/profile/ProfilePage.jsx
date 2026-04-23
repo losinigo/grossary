@@ -1,3 +1,7 @@
+/**
+ * ProfilePage — Shows the current user's profile, stats, and sign-out option.
+ * Displays a sign-in prompt for unauthenticated users.
+ */
 import { useNavigate } from 'react-router-dom'
 import { User, TrendingUp, CheckCircle, Clock, LogOut } from 'lucide-react'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -17,6 +21,8 @@ export default function ProfilePage() {
     enabled: !!user,
   })
 
+  /* ── Render ──────────────────────────────────────────────── */
+
   if (loading) return <div className="page"><p>Loading...</p></div>
 
   if (!user) {
@@ -27,10 +33,7 @@ export default function ProfilePage() {
             <User size={28} color="var(--color-gray-400)" />
           </div>
           <p className="text-lg font-semibold text-gray-900">Sign in to contribute</p>
-          <button
-            className="flex items-center gap-2.5 mt-2 px-6 py-2.5 bg-white border border-gray-200 rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow"
-            onClick={signInWithGoogle}
-          >
+          <button className="flex items-center gap-2.5 mt-2 px-6 py-2.5 bg-white border border-gray-200 rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow" onClick={signInWithGoogle}>
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" width="18" />
             Continue with Google
           </button>
@@ -48,6 +51,7 @@ export default function ProfilePage() {
 
   return (
     <div className="page">
+      {/* Avatar + name */}
       <div className="flex flex-col items-center gap-2 pt-8 pb-6">
         {meta.avatar_url ? (
           <img src={meta.avatar_url} alt="" className="w-16 h-16 rounded-full object-cover" referrerPolicy="no-referrer" />
@@ -60,6 +64,7 @@ export default function ProfilePage() {
         <p className="text-xs text-gray-500">{user.email}</p>
       </div>
 
+      {/* Stats grid */}
       <div className="grid grid-cols-3 gap-2.5 mt-2">
         {stats.map(({ icon: Icon, label, value, link }) => (
           <div
@@ -74,12 +79,8 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      <button
-        className="flex items-center justify-center gap-2 w-full mt-3 py-3 text-red text-sm font-medium rounded-md hover:bg-red-light transition-colors"
-        onClick={signOut}
-      >
-        <LogOut size={16} />
-        Sign Out
+      <button className="flex items-center justify-center gap-2 w-full mt-3 py-3 text-red text-sm font-medium rounded-md hover:bg-red-light transition-colors" onClick={signOut}>
+        <LogOut size={16} /> Sign Out
       </button>
     </div>
   )
