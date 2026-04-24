@@ -14,7 +14,7 @@ import { timeAgo } from '../../lib/utils'
 import useGeolocation from '../../lib/hooks/useGeolocation'
 import useRecentSearches from '../../lib/hooks/useRecentSearches'
 import BarcodeScanner from '../../components/BarcodeScanner'
-import ProductCard from '../../components/ui/ProductCard'
+import ModernProductCard from '../../components/ui/ModernProductCard'
 import StoreCard from '../../components/ui/StoreCard'
 import SectionTitle from '../../components/ui/SectionTitle'
 import EmptyState from '../../components/ui/EmptyState'
@@ -131,96 +131,15 @@ export default function SearchPage() {
             <SectionTitle>Recently Updated</SectionTitle>
             {recentlyUpdated?.length > 0 ? (
               <div className="flex flex-col gap-2 mt-4">
-                {recentlyUpdated.map((p, index) => {
-                  // Calculate price comparison
-                  const currentPrice = Number(p.price)
-                  const avgData = avgPrices?.find(avg => avg.product_id === p.product_id)
-                  const avgPrice = avgData ? Number(avgData.avg_price) : 0
-                  const hasComparison = avgPrice && avgPrice > 0
-                  const priceDiff = hasComparison ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0
-                  const isLower = priceDiff < 0
-                  const isHigher = priceDiff > 0
-                  
-                  return (
-                    <div 
-                      key={p.id} 
-                      className="bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-all duration-700 ease-out hover:scale-[1.02] hover:shadow-md" 
-                      style={{ 
-                        animationDelay: `${index * 150}ms`,
-                        animation: 'fadeInUp 0.8s ease-out forwards'
-                      }}
-                      onClick={() => { recent.add({ id: p.product_id, name: p.products?.name, brand: p.products?.brand }); navigate(`/product/${p.product_id}`) }}
-                    >
-                      <div className="flex gap-3 items-center">
-                        {/* Image Placeholder */}
-                        <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500 shrink-0">
-                          IMG
-                        </div>
-
-                        {/* Text Content */}
-                        <div className="flex-1 min-w-0">
-                          {/* Product Name */}
-                          <div className="flex items-center gap-1 min-w-0">
-                            {/* Product Name (truncates) */}
-                            <div className="truncate min-w-0">
-                              <span className="text-sm text-black font-semibold">
-                                {p.products?.name}
-                              </span>
-                            </div>
-
-                            {/* Brand (always visible) */}
-                            {p.products?.brand && (
-                              <span className="text-sm text-gray-500 shrink-0 ml-1">
-                                ({p.products?.brand})
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Price */}
-                          <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-lg font-bold text-blue-500">
-                              ₱{currentPrice.toFixed(2)}
-                            </span>
-
-                            {hasComparison && (
-                              <>
-                                <span className="text-xs text-gray-400">
-                                  ~ ₱{avgPrice.toFixed(2)}
-                                </span>
-
-                                {(isLower || isHigher) && (
-                                  <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                                    isLower 
-                                      ? 'bg-red-50 text-red-600' 
-                                      : 'bg-green-50 text-green-600'
-                                  }`}>
-                                    {Math.abs(priceDiff).toFixed(0)}%
-                                    {isLower ? (
-                                      <TrendingDown className="w-3 h-3" />
-                                    ) : (
-                                      <TrendingUp className="w-3 h-3" />
-                                    )}
-                                  </span>
-                                )}
-                              </>
-                            )}
-                          </div>
-
-                          {/* Available Locations */}
-                          <div className="flex items-center justify-between text-xs text-gray-500 mt-0.5">
-                            <span className="inline-flex items-center gap-1 text-[0.72rem] text-gray-400 truncate min-w-0">
-                              <MapPin size={11} className="shrink-0" />
-                              <span className="truncate">{p.stores?.name ? p.stores.name : 'Location info unavailable'}</span>
-                            </span>
-                            <span className="inline-flex items-center gap-1 text-[0.72rem] text-gray-400 shrink-0 ml-2">
-                              <Clock size={11} />{timeAgo(p.created_at)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                {recentlyUpdated.map((p, index) => (
+                  <ModernProductCard
+                    key={p.id}
+                    data={p}
+                    index={index}
+                    avgPrices={avgPrices}
+                    onClick={() => { recent.add({ id: p.product_id, name: p.products?.name, brand: p.products?.brand }); navigate(`/product/${p.product_id}`) }}
+                  />
+                ))}
               </div>
             ) : (
               <p className="text-center py-6 text-gray-400 text-sm">No price updates yet.</p>
@@ -261,7 +180,12 @@ export default function SearchPage() {
           {hasStores && <SectionTitle className="mt-4 -mb-1">Products</SectionTitle>}
           <div className="flex flex-col gap-2 mt-4">
             {results.map((r, i) => (
-              <ProductCard key={i} data={r} onClick={() => handleProductClick(r)} />
+              <ModernProductCard
+                key={i}
+                data={r}
+                avgPrices={avgPrices}
+                onClick={() => handleProductClick(r)}
+              />
             ))}
           </div>
         </>
