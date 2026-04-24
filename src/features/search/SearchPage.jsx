@@ -7,7 +7,7 @@
  */
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ScanBarcode, MapPin, Clock, PlusCircle, X } from 'lucide-react'
+import { Search, ScanBarcode, MapPin, Clock, PlusCircle, X, TrendingDown, TrendingUp } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { timeAgo } from '../../lib/utils'
@@ -58,7 +58,27 @@ export default function SearchPage() {
   const { data: recentlyUpdated } = useQuery({
     queryKey: ['recently-updated'],
     queryFn: async () => {
-      const { data } = await supabase.from('prices').select('id, price, created_at, product_id, products(name, brand), stores(name)').order('created_at', { ascending: false }).limit(8)
+      const { data } = await supabase
+        .from('prices')
+        .select(`
+          id, 
+          price, 
+          created_at, 
+          product_id,
+          products(name, brand),
+          stores(name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(8)
+      return data || []
+    },
+  })
+
+  // Get average prices for comparison
+  const { data: avgPrices } = useQuery({
+    queryKey: ['avg-prices'],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('get_product_averages')
       return data || []
     },
   })
@@ -107,39 +127,89 @@ export default function SearchPage() {
       {/* Idle state — recent searches + recently updated */}
       {showIdle && (
         <>
-          {recent.items.length > 0 && (
-            <section className="mt-5">
-              <SectionTitle>Recent Searches</SectionTitle>
-              <div className="flex flex-wrap gap-2">
-                {recent.items.map((r) => (
-                  <div key={r.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-[0.82rem] text-gray-900 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => navigate(`/product/${r.id}`)}>
-                    <span className="max-w-[200px] truncate">{r.name}{r.brand ? ` (${r.brand})` : ''}</span>
-                    <button className="flex items-center text-gray-400 hover:text-gray-900 transition-colors" onClick={(e) => handleRemoveRecent(e, r.id)}><X size={14} /></button>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
           <section className="mt-5">
             <SectionTitle>Recently Updated</SectionTitle>
             {recentlyUpdated?.length > 0 ? (
               <div className="flex flex-col gap-2 mt-4">
-                {recentlyUpdated.map((p) => (
-                  <div key={p.id} className="bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { recent.add({ id: p.product_id, name: p.products?.name, brand: p.products?.brand }); navigate(`/product/${p.product_id}`) }}>
-                    <div className="flex justify-between items-start gap-3">
-                      <div>
-                        <span className="text-[0.95rem] font-semibold block">{p.products?.name || 'Unknown'}</span>
-                        {p.products?.brand && <span className="text-xs text-gray-500">{p.products.brand}</span>}
+                {recentlyUpdated.map((p) => {
+                  // Calculate price comparison
+                  const currentPrice = Number(p.price)
+                  const avgData = avgPrices?.find(avg => avg.product_id === p.product_id)
+                  const avgPrice = avgData ? Number(avgData.avg_price) : 0
+                  const hasComparison = avgPrice && avgPrice > 0
+                  const priceDiff = hasComparison ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0
+                  const isLower = priceDiff < 0
+                  const isHigher = priceDiff > 0
+                  
+                  return (
+                    <div key={p.id} className="bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { recent.add({ id: p.product_id, name: p.products?.name, brand: p.products?.brand }); navigate(`/product/${p.product_id}`) }}>
+                      <div className="flex gap-3 items-center">
+                        {/* Image Placeholder */}
+                        <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500 shrink-0">
+                          IMG
+                        </div>
+
+                        {/* Text Content */}
+                        <div className="flex-1 min-w-0">
+                          {/* Product Name */}
+                          <div className="flex items-center gap-1 min-w-0">
+                            {/* Product Name (truncates) */}
+                            <div className="truncate min-w-0">
+                              <span className="text-sm text-black font-semibold">
+                                {p.products?.name}
+                              </span>
+                            </div>
+
+                            {/* Brand (always visible) */}
+                            {p.products?.brand && (
+                              <span className="text-sm text-gray-500 shrink-0 ml-1">
+                                ({p.products?.brand})
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Price */}
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-lg font-bold text-blue-500">
+                              ₱{currentPrice.toFixed(2)}
+                            </span>
+
+                            {hasComparison && (
+                              <>
+                                <span className="text-xs text-gray-400">
+                                  ~ ₱{avgPrice.toFixed(2)}
+                                </span>
+
+                                {(isLower || isHigher) && (
+                                  <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                                    isLower 
+                                      ? 'bg-red-50 text-red-600' 
+                                      : 'bg-green-50 text-green-600'
+                                  }`}>
+                                    {Math.abs(priceDiff).toFixed(0)}%
+                                    {isLower ? (
+                                      <TrendingDown className="w-3 h-3" />
+                                    ) : (
+                                      <TrendingUp className="w-3 h-3" />
+                                    )}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+
+                          {/* Available Locations */}
+                          <span className="text-xs text-gray-500 mt-0.5">
+                            <span className="inline-flex items-center gap-1 text-[0.72rem] text-gray-400">
+                              <MapPin size={11} />{p.stores?.name ? p.stores.name : 'Location info unavailable'}
+                              <Clock size={11} className="ml-2" />{timeAgo(p.created_at)}
+                            </span>
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-lg font-bold text-green whitespace-nowrap">₱{Number(p.price).toFixed(2)}</span>
                     </div>
-                    <div className="flex items-center flex-wrap gap-3 mt-2">
-                      {p.stores?.name && <span className={meta}><MapPin size={13} /> {p.stores.name}</span>}
-                      <span className={meta}><Clock size={13} /> {timeAgo(p.created_at)}</span>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <p className="text-center py-6 text-gray-400 text-sm">No price updates yet.</p>
