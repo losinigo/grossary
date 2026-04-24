@@ -1,0 +1,78 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260424153303
+Username: MBC-ISD-367819\CodexSandboxOffline
+RunAs User: MBC-ISD-367819\CodexSandboxOffline
+Configuration Name: 
+Machine: MBC-ISD-367819 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -Command [Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+$i=0; Get-Content src/App.jsx | ForEach-Object { $i++; '{0,4}: {1}' -f $i, $_ }
+Process ID: 46300
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS>[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+$i=0; Get-Content src/App.jsx | ForEach-Object { $i++; '{0,4}: {1}' -f $i, $_ }
+   1: import { HashRouter, Routes, Route } from 'react-router-dom'
+   2: import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+   3: import { AuthProvider } from './lib/hooks/useAuth'
+   4: import Layout from './components/Layout'
+   5: import SearchPage from './features/search/SearchPage'
+   6: import ProductDetail from './features/search/ProductDetail'
+   7: import ContributePage from './features/contribute/ContributePage'
+   8: import AddStore from './features/contribute/AddStore'
+   9: import AddItem from './features/contribute/AddItem'
+  10: import AddPrice from './features/contribute/AddPrice'
+  11: import ConfirmPrice from './features/contribute/ConfirmPrice'
+  12: import StoresPage from './features/stores/StoresPage'
+  13: import StoreDetail from './features/stores/StoreDetail'
+  14: import CommunityPage from './features/community/CommunityPage'
+  15: import MemberProfile from './features/community/MemberProfile'
+  16: import ShoppingListsPage from './features/lists/ShoppingListsPage'
+  17: import ShoppingListDetail from './features/lists/ShoppingListDetail'
+  18: import ProfilePage from './features/profile/ProfilePage'
+  19: import ContributionsPage from './features/profile/ContributionsPage'
+  20:
+  21: const queryClient = new QueryClient()
+  22:
+  23: export default function App() {
+  24:   return (
+  25:     <QueryClientProvider client={queryClient}>
+  26:       <AuthProvider>
+  27:         <HashRouter>
+  28:           <Routes>
+  29:             <Route element={<Layout />}>
+  30:               <Route index element={<SearchPage />} />
+  31:               <Route path="product/:id" element={<ProductDetail />} />
+  32:               <Route path="contribute" element={<ContributePage />} />
+  33:               <Route path="contribute/store" element={<AddStore />} />
+  34:               <Route path="contribute/item" element={<AddItem />} />
+  35:               <Route path="contribute/price" element={<AddPrice />} />
+  36:               <Route path="contribute/confirm" element={<ConfirmPrice />} />
+  37:               <Route path="stores" element={<StoresPage />} />
+  38:               <Route path="stores/:id" element={<StoreDetail />} />
+  39:               <Route path="community" element={<CommunityPage />} />
+  40:               <Route path="users/:id" element={<MemberProfile />} />
+  41:               <Route path="lists" element={<ShoppingListsPage />} />
+  42:               <Route path="lists/:id" element={<ShoppingListDetail />} />
+  43:               <Route path="profile" element={<ProfilePage />} />
+  44:               <Route path="profile/contributions" element={<ContributionsPage />} />
+  45:             </Route>
+  46:           </Routes>
+  47:         </HashRouter>
+  48:       </AuthProvider>
+  49:     </QueryClientProvider>
+  50:   )
+  51: }
+PS>$global:?
+True
+**********************
+Windows PowerShell transcript end
+End time: 20260424153303
+**********************

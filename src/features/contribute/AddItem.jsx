@@ -2,9 +2,9 @@
  * AddItem — Form to add a new grocery product with name, brand, barcode, and unit type.
  * Supports barcode scanning via the device camera.
  */
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ScanBarcode } from 'lucide-react'
+import { ImagePlus, ScanBarcode, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
 import BarcodeScanner from '../../components/BarcodeScanner'
@@ -31,9 +31,15 @@ export default function AddItem() {
   const [unitType, setUnitType] = useState('piece')
   const [unitName, setUnitName] = useState('piece')
   const [unitAbbreviation, setUnitAbbreviation] = useState('pc')
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState('')
   const [scanning, setScanning] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview)
+  }, [imagePreview])
 
   /* ── Handlers ────────────────────────────────────────────── */
 
@@ -50,12 +56,68 @@ export default function AddItem() {
     setUnitAbbreviation(UNIT_PRESETS[unitType][unit].abbreviation)
   }
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be 5MB or smaller.')
+      return
+    }
+    setError('')
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  const clearImage = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview)
+    setImageFile(null)
+    setImagePreview('')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!name.trim()) return setError('Item name is required.')
     setSubmitting(true); setError('')
-    const { error: dbError } = await supabase.from('products').insert({ name: name.trim(), brand: brand.trim() || null, barcode: barcode.trim() || null, unit_type: unitType, unit_name: unitName, unit_abbreviation: unitAbbreviation, created_by: user.id })
-    if (dbError) { setError(dbError.code === '23505' ? 'A product with this barcode already exists.' : dbError.message); setSubmitting(false) }
+
+    let imageUrl = null
+    let imagePath = null
+    if (imageFile) {
+      const extension = imageFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`
+      imagePath = path
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(path, imageFile, { upsert: false })
+      if (uploadError) {
+        setError(uploadError.message)
+        setSubmitting(false)
+        return
+      }
+      const { data: publicUrlData } = supabase.storage.from('product-images').getPublicUrl(path)
+      imageUrl = publicUrlData.publicUrl
+    }
+
+    const { error: dbError } = await supabase.from('products').insert({
+      name: name.trim(),
+      brand: brand.trim() || null,
+      barcode: barcode.trim() || null,
+      image_url: imageUrl,
+      unit_type: unitType,
+      unit_name: unitName,
+      unit_abbreviation: unitAbbreviation,
+      created_by: user.id,
+    })
+    if (dbError) {
+      if (imagePath) {
+        await supabase.storage.from('product-images').remove([imagePath])
+      }
+      setError(dbError.code === '23505' ? 'A product with this barcode already exists.' : dbError.message)
+      setSubmitting(false)
+    }
     else navigate('/contribute', { state: { success: 'Item added!' } })
   }
 
@@ -70,6 +132,39 @@ export default function AddItem() {
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <label className={labelCls}>Item Name *<input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Whole Milk 1L" /></label>
         <label className={labelCls}>Brand<input className={inputCls} value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="e.g. Alaska" /></label>
+
+        <div className={labelCls}>
+          <span>Product Photo</span>
+          <div className="flex flex-col gap-3">
+            {imagePreview ? (
+              <div className="relative overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+                <img src={imagePreview} alt="" className="h-48 w-full object-cover" />
+                <button
+                  type="button"
+                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm"
+                  onClick={clearImage}
+                  aria-label="Remove image"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
+                <ImagePlus size={22} className="text-gray-400" />
+                <span className="text-sm font-medium text-gray-700">Upload a product photo</span>
+                <span className="text-xs text-gray-500">JPG, PNG, or WebP up to 5MB</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+              </label>
+            )}
+            {imagePreview && (
+              <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-sm bg-primary-light px-4 py-2 text-sm font-semibold text-primary">
+                <ImagePlus size={16} />
+                Change Photo
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+              </label>
+            )}
+          </div>
+        </div>
 
         <label className={labelCls}>Unit Type *
           <select className={selectCls} value={unitType} onChange={(e) => handleUnitTypeChange(e.target.value)}>

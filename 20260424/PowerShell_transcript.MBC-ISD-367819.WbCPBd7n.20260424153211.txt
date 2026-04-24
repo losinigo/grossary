@@ -1,0 +1,28 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260424153211
+Username: MBC-ISD-367819\CodexSandboxOffline
+RunAs User: MBC-ISD-367819\CodexSandboxOffline
+Configuration Name: 
+Machine: MBC-ISD-367819 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -Command [Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+npm run build
+Process ID: 33876
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS>[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+npm run build
+Could not determine Node.js install directory
+PS>$global:?
+False
+**********************
+Windows PowerShell transcript end
+End time: 20260424153212
+**********************

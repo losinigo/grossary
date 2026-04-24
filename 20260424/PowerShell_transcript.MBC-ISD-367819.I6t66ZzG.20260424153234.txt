@@ -1,0 +1,224 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260424153234
+Username: MBC-ISD-367819\CodexSandboxOffline
+RunAs User: MBC-ISD-367819\CodexSandboxOffline
+Configuration Name: 
+Machine: MBC-ISD-367819 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -Command [Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+$i=0; Get-Content src/features/search/SearchPage.jsx | ForEach-Object { $i++; '{0,4}: {1}' -f $i, $_ }
+Process ID: 31940
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS>[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+$i=0; Get-Content src/features/search/SearchPage.jsx | ForEach-Object { $i++; '{0,4}: {1}' -f $i, $_ }
+   1: /**
+   2:  * SearchPage â€” Home page of the app.
+   3:  *
+   4:  * Lets users search for grocery products and stores via text or barcode scan.
+   5:  * When idle, shows recent searches and recently-updated prices.
+   6:  * When searching, shows matching products and stores.
+   7:  */
+   8: import { useState, useCallback } from 'react'
+   9: import { useNavigate } from 'react-router-dom'
+  10: import { Search, ScanBarcode, MapPin, Clock, PlusCircle, X, TrendingDown, TrendingUp } from 'lucide-react'
+  11: import { useQuery } from '@tanstack/react-query'
+  12: import { supabase } from '../../lib/supabase'
+  13: import { timeAgo } from '../../lib/utils'
+  14: import useGeolocation from '../../lib/hooks/useGeolocation'
+  15: import useRecentSearches from '../../lib/hooks/useRecentSearches'
+  16: import BarcodeScanner from '../../components/BarcodeScanner'
+  17: import ModernProductCard from '../../components/ui/ModernProductCard'
+  18: import StoreCard from '../../components/ui/StoreCard'
+  19: import SectionTitle from '../../components/ui/SectionTitle'
+  20: import EmptyState from '../../components/ui/EmptyState'
+  21:
+  22: const meta = 'inline-flex items-center gap-1 text-xs text-gray-500'
+  23:
+  24: export default function SearchPage() {
+  25:   const [query, setQuery] = useState('')
+  26:   const [searchTerm, setSearchTerm] = useState('')
+  27:   const [scanning, setScanning] = useState(false)
+  28:   const [scannedBarcode, setScannedBarcode] = useState(null)
+  29:   const navigate = useNavigate()
+  30:   const { coords, coordsRef, requestLocation } = useGeolocation()
+  31:   const recent = useRecentSearches()
+  32:
+  33:   /* â”€â”€ Queries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  34:
+  35:   const { data: results, isLoading } = useQuery({
+  36:     queryKey: ['search', searchTerm, coords?.lat, coords?.lng],
+  37:     queryFn: async () => {
+  38:       const loc = coordsRef.current
+  39:       if (loc) {
+  40:         const { data } = await supabase.rpc('search_products_nearby', { search_term: searchTerm, user_lat: loc.lat, user_lon: loc.lng, radius_km: 25 })
+  41:         return data || []
+  42:       }
+  43:       const { data } = await supabase.rpc('search_products', { search_term: searchTerm })
+  44:       return (data || []).map((p) => ({ ...p, product_id: p.id, product_name: p.name }))
+  45:     },
+  46:     enabled: searchTerm.length > 0,
+  47:   })
+  48:
+  49:   const { data: storeResults } = useQuery({
+  50:     queryKey: ['search-stores', searchTerm],
+  51:     queryFn: async () => {
+  52:       const { data } = await supabase.from('stores').select('id, name, address').or(`name.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%`).limit(5)
+  53:       return data || []
+  54:     },
+  55:     enabled: searchTerm.length > 0,
+  56:   })
+  57:
+  58:   const { data: recentlyUpdated } = useQuery({
+  59:     queryKey: ['recently-updated'],
+  60:     queryFn: async () => {
+  61:       const { data } = await supabase
+  62:         .from('prices')
+  63:         .select(`
+  64:           id,
+  65:           price,
+  66:           created_at,
+  67:           product_id,
+  68:           products(name, brand),
+  69:           stores(name)
+  70:         `)
+  71:         .order('created_at', { ascending: false })
+  72:         .limit(8)
+  73:       return data || []
+  74:     },
+  75:   })
+  76:
+  77:   // Get average prices for comparison
+  78:   const { data: avgPrices } = useQuery({
+  79:     queryKey: ['avg-prices'],
+  80:     queryFn: async () => {
+  81:       const { data } = await supabase.rpc('get_product_averages')
+  82:       return data || []
+  83:     },
+  84:   })
+  85:
+  86:   /* â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  87:
+  88:   const doSearch = async (term) => {
+  89:     if (!term.trim()) return
+  90:     await requestLocation()
+  91:     setSearchTerm(term.trim())
+  92:   }
+  93:
+  94:   const handleSearch = (e) => { e?.preventDefault(); doSearch(query) }
+  95:   const handleScan = (code) => { setScanning(false); setScannedBarcode(code); setQuery(code); doSearch(code) }
+  96:
+  97:   const handleProductClick = useCallback((r) => {
+  98:     recent.add({ id: r.product_id, name: r.product_name, brand: r.brand })
+  99:     navigate(`/product/${r.product_id}`)
+ 100:   }, [navigate, recent])
+ 101:
+ 102:   const handleRemoveRecent = useCallback((e, id) => {
+ 103:     e.stopPropagation()
+ 104:     recent.remove(id)
+ 105:   }, [recent])
+ 106:
+ 107:   /* â”€â”€ Derived state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+ 108:
+ 109:   const hasProducts = results?.length > 0
+ 110:   const hasStores = storeResults?.length > 0
+ 111:   const noResults = searchTerm && !isLoading && !hasProducts && !hasStores
+ 112:   const showIdle = !searchTerm && !isLoading
+ 113:
+ 114:   /* â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+ 115:
+ 116:   return (
+ 117:     <div className="page">
+ 118:       {/* Search bar */}
+ 119:       <form className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-md px-4 py-2.5 shadow-sm" onSubmit={handleSearch}>
+ 120:         <Search size={18} color="var(--color-gray-400)" />
+ 121:         <input type="text" className="flex-1 border-none outline-none text-[0.95rem] bg-transparent text-gray-900 placeholder:text-gray-400" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search groceries or stores..." />
+ 122:         <button type="button" className="flex items-center justify-center text-primary p-1 rounded-sm hover:bg-primary-light transition-colors" onClick={() => setScanning(true)} aria-label="Scan barcode">
+ 123:           <ScanBarcode size={20} />
+ 124:         </button>
+ 125:       </form>
+ 126:
+ 127:       {/* Idle state â€” recent searches + recently updated */}
+ 128:       {showIdle && (
+ 129:         <>
+ 130:           <section className="mt-5">
+ 131:             <SectionTitle>Recently Updated</SectionTitle>
+ 132:             {recentlyUpdated?.length > 0 ? (
+ 133:               <div className="flex flex-col gap-2 mt-4">
+ 134:                 {recentlyUpdated.map((p, index) => (
+ 135:                   <ModernProductCard
+ 136:                     key={p.id}
+ 137:                     data={p}
+ 138:                     index={index}
+ 139:                     avgPrices={avgPrices}
+ 140:                     onClick={() => { recent.add({ id: p.product_id, name: p.products?.name, brand: p.products?.brand }); navigate(`/product/${p.product_id}`) }}
+ 141:                   />
+ 142:                 ))}
+ 143:               </div>
+ 144:             ) : (
+ 145:               <p className="text-center py-6 text-gray-400 text-sm">No price updates yet.</p>
+ 146:             )}
+ 147:           </section>
+ 148:         </>
+ 149:       )}
+ 150:
+ 151:       {isLoading && <p className="text-center py-10 text-gray-500 text-sm">Searching...</p>}
+ 152:
+ 153:       {noResults && (
+ 154:         <EmptyState
+ 155:           title="No results found"
+ 156:           message="Try a different search term, or be the first to add this item!"
+ 157:           action={scannedBarcode && (
+ 158:             <button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full" onClick={() => navigate('/contribute/item', { state: { barcode: scannedBarcode } })}>
+ 159:               <PlusCircle size={18} /> Add Item
+ 160:             </button>
+ 161:           )}
+ 162:         />
+ 163:       )}
+ 164:
+ 165:       {/* Store results */}
+ 166:       {hasStores && (
+ 167:         <>
+ 168:           {hasProducts && <SectionTitle className="mt-4 -mb-1">Stores</SectionTitle>}
+ 169:           <div className="flex flex-col gap-2 mt-4">
+ 170:             {storeResults.map((s) => (
+ 171:               <StoreCard key={s.id} store={s} onClick={() => navigate(`/stores/${s.id}`)} />
+ 172:             ))}
+ 173:           </div>
+ 174:         </>
+ 175:       )}
+ 176:
+ 177:       {/* Product results */}
+ 178:       {hasProducts && (
+ 179:         <>
+ 180:           {hasStores && <SectionTitle className="mt-4 -mb-1">Products</SectionTitle>}
+ 181:           <div className="flex flex-col gap-2 mt-4">
+ 182:             {results.map((r, i) => (
+ 183:               <ModernProductCard
+ 184:                 key={i}
+ 185:                 data={r}
+ 186:                 avgPrices={avgPrices}
+ 187:                 onClick={() => handleProductClick(r)}
+ 188:               />
+ 189:             ))}
+ 190:           </div>
+ 191:         </>
+ 192:       )}
+ 193:
+ 194:       {scanning && <BarcodeScanner onScan={handleScan} onClose={() => setScanning(false)} />}
+ 195:     </div>
+ 196:   )
+ 197: }
+PS>$global:?
+True
+**********************
+Windows PowerShell transcript end
+End time: 20260424153235
+**********************

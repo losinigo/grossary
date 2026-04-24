@@ -7,10 +7,9 @@
  */
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ScanBarcode, MapPin, Clock, PlusCircle, X, TrendingDown, TrendingUp } from 'lucide-react'
+import { Search, ScanBarcode, PlusCircle } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { timeAgo } from '../../lib/utils'
 import useGeolocation from '../../lib/hooks/useGeolocation'
 import useRecentSearches from '../../lib/hooks/useRecentSearches'
 import BarcodeScanner from '../../components/BarcodeScanner'
@@ -18,8 +17,6 @@ import ModernProductCard from '../../components/ui/ModernProductCard'
 import StoreCard from '../../components/ui/StoreCard'
 import SectionTitle from '../../components/ui/SectionTitle'
 import EmptyState from '../../components/ui/EmptyState'
-
-const meta = 'inline-flex items-center gap-1 text-xs text-gray-500'
 
 export default function SearchPage() {
   const [query, setQuery] = useState('')
@@ -65,7 +62,7 @@ export default function SearchPage() {
           price, 
           created_at, 
           product_id,
-          products(name, brand),
+          products(name, brand, image_url),
           stores(name)
         `)
         .order('created_at', { ascending: false })

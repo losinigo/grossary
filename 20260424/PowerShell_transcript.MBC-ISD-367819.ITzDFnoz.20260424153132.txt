@@ -1,0 +1,141 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260424153132
+Username: MBC-ISD-367819\CodexSandboxOffline
+RunAs User: MBC-ISD-367819\CodexSandboxOffline
+Configuration Name: 
+Machine: MBC-ISD-367819 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -Command [Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+Set-Location 'c:\Users\carlos_inigo\Documents\Visual Studio Code\Projects\github\grossary'; Get-Content package.json; ''; Get-Content vite.config.js; ''; Get-Content eslint.config.js
+Process ID: 21140
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS>[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+Set-Location 'c:\Users\carlos_inigo\Documents\Visual Studio Code\Projects\github\grossary'; Get-Content package.json; ''; Get-Content vite.config.js; ''; Get-Content eslint.config.js
+PS>TerminatingError(Set-Location): "Access is denied"
+**********************
+Windows PowerShell transcript start
+Start time: 20260424153132
+Username: MBC-ISD-367819\CodexSandboxOffline
+RunAs User: MBC-ISD-367819\CodexSandboxOffline
+Configuration Name: 
+Machine: MBC-ISD-367819 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -Command [Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+Set-Location 'c:\Users\carlos_inigo\Documents\Visual Studio Code\Projects\github\grossary'; Get-Content package.json; ''; Get-Content vite.config.js; ''; Get-Content eslint.config.js
+Process ID: 21140
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS>CommandInvocation(Out-String): "Out-String"
+>> ParameterBinding(Out-String): name="InputObject"; value="Access is denied"
+Set-Location : Access is denied
+At line:2 char:1
++ Set-Location 'c:\Users\carlos_inigo\Documents\Visual Studio Code\Proj ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Set-Location], UnauthorizedAccessException
+    + FullyQualifiedErrorId : System.UnauthorizedAccessException,Microsoft.PowerShell.Commands.SetLocationCommand
+Set-Location : Access is denied
+At line:2 char:1
++ Set-Location 'c:\Users\carlos_inigo\Documents\Visual Studio Code\Proj ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Set-Location], UnauthorizedAccessException
+    + FullyQualifiedErrorId : System.UnauthorizedAccessException,Microsoft.PowerShell.Commands.SetLocationCommand
+Set-Location : Access is denied
+At line:2 char:1
++ Set-Location 'c:\Users\carlos_inigo\Documents\Visual Studio Code\Proj ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Set-Location], UnauthorizedAccessException
+    + FullyQualifiedErrorId : System.UnauthorizedAccessException,Microsoft.PowerShell.Commands.SetLocationCommand
+
+{
+  "name": "grossary",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ericblade/quagga2": "^1.12.1",
+    "@supabase/supabase-js": "^2.101.1",
+    "@tailwindcss/vite": "^4.2.2",
+    "@tanstack/react-query": "^5.96.2",
+    "lucide-react": "^1.7.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.14.0",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "vite": "^8.0.4"
+  }
+}
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  base: '/grossary/',
+})
+
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{js,jsx}'],
+    extends: [
+      js.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    rules: {
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+    },
+  },
+])
+PS>$global:?
+True
+**********************
+Windows PowerShell transcript end
+End time: 20260424153133
+**********************

@@ -1,0 +1,204 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260424153147
+Username: MBC-ISD-367819\CodexSandboxOffline
+RunAs User: MBC-ISD-367819\CodexSandboxOffline
+Configuration Name: 
+Machine: MBC-ISD-367819 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -Command [Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+Get-Content src/components/Layout.jsx; ''; Get-Content src/components/NavBar.jsx; ''; Get-Content src/components/Avatar.jsx; ''; Get-Content src/components/BarcodeScanner.jsx
+Process ID: 36424
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS>[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+Get-Content src/components/Layout.jsx; ''; Get-Content src/components/NavBar.jsx; ''; Get-Content src/components/Avatar.jsx; ''; Get-Content src/components/BarcodeScanner.jsx
+/**
+ * Layout â€” App shell that wraps every page.
+ * Provides a sticky header with the app name and user avatar,
+ * a scrollable content area (<Outlet />), and the bottom NavBar.
+ */
+import { Outlet } from 'react-router-dom'
+import { useAuth } from '../lib/hooks/useAuth'
+import NavBar from './NavBar'
+
+export default function Layout() {
+  const { user } = useAuth()
+  const avatar = user?.user_metadata?.avatar_url
+
+  return (
+    <div className="min-h-dvh flex flex-col">
+      <header className="sticky top-0 flex items-center justify-between bg-white px-5 py-3.5 border-b border-gray-200 z-100">
+        <span className="text-xl font-bold tracking-tight text-gray-900">Grossary</span>
+        {avatar && <img src={avatar} alt="" className="w-7.5 h-7.5 rounded-full object-cover" referrerPolicy="no-referrer" />}
+      </header>
+      <main className="flex-1 p-4 pb-22">
+        <Outlet />
+      </main>
+      <NavBar />
+    </div>
+  )
+}
+
+/**
+ * NavBar â€” Fixed bottom tab bar with five navigation tabs:
+ * Search, Add, Lists, Community, and Profile.
+ */
+import { NavLink } from 'react-router-dom'
+import { Search, PlusCircle, Users, User, ShoppingCart } from 'lucide-react'
+
+const tabs = [
+  { to: '/', label: 'Search', icon: Search },
+  { to: '/contribute', label: 'Add', icon: PlusCircle },
+  { to: '/lists', label: 'Lists', icon: ShoppingCart },
+  { to: '/community', label: 'Community', icon: Users },
+  { to: '/profile', label: 'Profile', icon: User },
+]
+
+export default function NavBar() {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 flex bg-white/92 backdrop-blur-xl border-t border-gray-200 pb-[env(safe-area-inset-bottom,8px)] pt-1.5 z-100">
+      {tabs.map(({ to, label, icon: Icon }) => (
+        <NavLink
+          key={to}
+          to={to}
+          className={({ isActive }) =>
+            `flex-1 flex flex-col items-center gap-0.5 py-1.5 transition-colors duration-200 ${isActive ? 'text-primary' : 'text-gray-400'}`
+          }
+          end={to === '/'}
+        >
+          {({ isActive }) => (
+            <>
+              <Icon size={22} strokeWidth={isActive ? 2.2 : 1.6} />
+              <span className="text-[0.65rem] font-medium tracking-wide">{label}</span>
+            </>
+          )}
+        </NavLink>
+      ))}
+    </nav>
+  )
+}
+
+/**
+ * Avatar â€” Displays a user's profile image or a generic placeholder icon.
+ *
+ * @param {string} [src]  â€“ image URL (falls back to a gray User icon)
+ * @param {number} [size] â€“ pixel dimensions (default 18)
+ */
+import { User } from 'lucide-react'
+
+export default function Avatar({ src, size = 18 }) {
+  const style = { width: size, height: size }
+
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        className="rounded-full object-cover shrink-0"
+        style={style}
+        referrerPolicy="no-referrer"
+      />
+    )
+  }
+  return (
+    <div className="rounded-full bg-gray-200 text-gray-400 flex items-center justify-center shrink-0" style={style}>
+      <User size={Math.floor(size * 0.6)} />
+    </div>
+  )
+}
+
+/**
+ * BarcodeScanner â€” Full-screen camera overlay that detects barcodes using Quagga2.
+ * Supports EAN, UPC, Code 128, and Code 39 formats.
+ *
+ * @param {function} onScan  â€“ called with the decoded barcode string
+ * @param {function} onClose â€“ called when the user dismisses the scanner
+ */
+import { useEffect, useRef, useCallback } from 'react'
+import Quagga from '@ericblade/quagga2'
+import { X } from 'lucide-react'
+
+export default function BarcodeScanner({ onScan, onClose }) {
+  const scannerRef = useRef(null)
+  const detectedRef = useRef(false)
+
+  const handleDetected = useCallback((result) => {
+    if (detectedRef.current) return
+    const code = result?.codeResult?.code
+    if (!code) return
+    detectedRef.current = true
+    Quagga.stop()
+    onScan(code)
+  }, [onScan])
+
+  useEffect(() => {
+    Quagga.init(
+      {
+        inputStream: {
+          type: 'LiveStream',
+          target: scannerRef.current,
+          constraints: {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        },
+        decoder: {
+          readers: [
+            'ean_reader',
+            'ean_8_reader',
+            'upc_reader',
+            'upc_e_reader',
+            'code_128_reader',
+            'code_39_reader',
+          ],
+        },
+        locate: true,
+        frequency: 15,
+      },
+      (err) => {
+        if (err) {
+          console.error('Quagga init error:', err)
+          onClose()
+          return
+        }
+        Quagga.start()
+      },
+    )
+
+    Quagga.onDetected(handleDetected)
+
+    return () => {
+      Quagga.offDetected(handleDetected)
+      Quagga.stop()
+    }
+  }, [handleDetected, onClose])
+
+  return (
+    <div className="fixed inset-0 bg-black/85 z-200 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg overflow-hidden w-full max-w-[400px]">
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-200">
+          <span className="text-[0.95rem] font-semibold">Scan Barcode</span>
+          <button className="flex items-center justify-center text-gray-500 p-1 rounded-sm hover:bg-gray-100" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+        <div className="relative w-full overflow-hidden [&_video]:!w-full [&_video]:!h-auto [&_video]:block [&_canvas]:!w-full [&_canvas]:!h-auto [&_canvas]:block [&_canvas.drawingBuffer]:absolute [&_canvas.drawingBuffer]:top-0 [&_canvas.drawingBuffer]:left-0" ref={scannerRef} />
+        <p className="text-center py-3 text-xs text-gray-500">Point your camera at a barcode</p>
+      </div>
+    </div>
+  )
+}
+PS>$global:?
+True
+**********************
+Windows PowerShell transcript end
+End time: 20260424153147
+**********************

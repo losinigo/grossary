@@ -14,6 +14,7 @@ export default function ModernProductCard({ data, onClick, index, avgPrices }) {
   // Handle different data structures
   const productName = data.product_name || data.products?.name || data.name
   const brand = data.brand || data.products?.brand
+  const imageUrl = data.image_url || data.products?.image_url
   const price = Number(data.price)
   const storeName = data.store_name || data.stores?.name
   const distanceKm = data.distance_km
@@ -53,9 +54,13 @@ export default function ModernProductCard({ data, onClick, index, avgPrices }) {
     >
       <div className="flex gap-3 items-center">
         {/* Image Placeholder */}
-        <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500 shrink-0">
-          IMG
-        </div>
+        {imageUrl ? (
+          <img src={imageUrl} alt="" className="h-16 w-16 rounded-md object-cover shrink-0 bg-gray-100" />
+        ) : (
+          <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500 shrink-0">
+            IMG
+          </div>
+        )}
 
         {/* Text Content */}
         <div className="flex-1 min-w-0">

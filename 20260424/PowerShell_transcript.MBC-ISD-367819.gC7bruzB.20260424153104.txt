@@ -1,0 +1,50 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260424153104
+Username: MBC-ISD-367819\CodexSandboxOffline
+RunAs User: MBC-ISD-367819\CodexSandboxOffline
+Configuration Name: 
+Machine: MBC-ISD-367819 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -Command [Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+Get-ChildItem -Force | Select-Object Mode,Length,LastWriteTime,Name
+Process ID: 34048
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS>[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+Get-ChildItem -Force | Select-Object Mode,Length,LastWriteTime,Name
+
+Mode   Length LastWriteTime          Name
+----   ------ -------------          ----
+d--h--        24/04/2026 3:16:52 pm  .git
+d-----        07/04/2026 2:15:30 pm  .github
+d-----        24/04/2026 3:31:04 pm  20260424
+d-----        23/04/2026 2:07:45 pm  dist
+d-----        16/04/2026 2:15:37 pm  node_modules
+d-----        07/04/2026 11:42:50 am public
+d-----        24/04/2026 3:17:01 pm  src
+d-----        24/04/2026 3:17:14 pm  supabase
+-a---- 128    07/04/2026 2:11:21 pm  .env
+-a---- 92     07/04/2026 11:41:33 am .env.example
+-a---- 294    07/04/2026 11:42:58 am .gitignore
+-a---- 758    07/04/2026 11:37:55 am eslint.config.js
+-a---- 402    24/04/2026 10:23:03 am index.html
+-a---- 129617 16/04/2026 2:15:37 pm  package-lock.json
+-a---- 885    23/04/2026 1:01:10 pm  package.json
+-a---- 1027   07/04/2026 11:37:55 am README.md
+-a---- 1230   24/04/2026 9:42:56 am  supabase_function_recent_prices.sql
+-a---- 214    16/04/2026 2:15:42 pm  vite.config.js
+
+
+PS>$global:?
+True
+**********************
+Windows PowerShell transcript end
+End time: 20260424153105
+**********************

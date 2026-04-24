@@ -1,0 +1,156 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260424153303
+Username: MBC-ISD-367819\CodexSandboxOffline
+RunAs User: MBC-ISD-367819\CodexSandboxOffline
+Configuration Name: 
+Machine: MBC-ISD-367819 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -Command [Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+$i=0; Get-Content src/lib/hooks/useProductSearch.jsx | ForEach-Object { $i++; '{0,4}: {1}' -f $i, $_ }; ''; $i=0; Get-Content src/features/contribute/ConfirmPrice.jsx | ForEach-Object { $i++; '{0,4}: {1}' -f $i, $_ }
+Process ID: 47008
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS>[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;
+$i=0; Get-Content src/lib/hooks/useProductSearch.jsx | ForEach-Object { $i++; '{0,4}: {1}' -f $i, $_ }; ''; $i=0; Get-Content src/features/contribute/ConfirmPrice.jsx | ForEach-Object { $i++; '{0,4}: {1}' -f $i, $_ }
+   1: /**
+   2:  * useProductSearch â€” Fuzzy product search by name, brand, or barcode.
+   3:  *
+   4:  * @param {string} searchTerm â€“ the user's input (min 2 chars to fire)
+   5:  * @param {object} [options]
+   6:  * @param {string[]} [options.fields] â€“ columns to select (defaults to id, name, brand + unit cols)
+   7:  * @returns {{ data, isLoading }} from useQuery
+   8:  */
+   9: import { useQuery } from '@tanstack/react-query'
+  10: import { supabase } from '../supabase'
+  11:
+  12: const DEFAULT_FIELDS = 'id, name, brand, unit_type, unit_name, unit_abbreviation'
+  13:
+  14: export default function useProductSearch(searchTerm, { fields = DEFAULT_FIELDS } = {}) {
+  15:   return useQuery({
+  16:     queryKey: ['products-search', searchTerm],
+  17:     queryFn: async () => {
+  18:       if (!searchTerm.trim()) return []
+  19:       const { data } = await supabase
+  20:         .from('products')
+  21:         .select(fields)
+  22:         .or(`name.ilike.%${searchTerm}%,brand.ilike.%${searchTerm}%,barcode.eq.${searchTerm}`)
+  23:         .limit(10)
+  24:       return data || []
+  25:     },
+  26:     enabled: searchTerm.length > 1,
+  27:   })
+  28: }
+
+   1: /**
+   2:  * ConfirmPrice â€” Lets users search for a product and confirm or deny
+   3:  * its current reported prices at various stores.
+   4:  */
+   5: import { useState } from 'react'
+   6: import { useNavigate } from 'react-router-dom'
+   7: import { useQuery } from '@tanstack/react-query'
+   8: import { supabase } from '../../lib/supabase'
+   9: import { useAuth } from '../../lib/hooks/useAuth'
+  10: import useProductSearch from '../../lib/hooks/useProductSearch'
+  11: import useConfirmPrice from '../../lib/hooks/useConfirmPrice'
+  12: import useMyConfirmations from '../../lib/hooks/useMyConfirmations'
+  13: import BackButton from '../../components/ui/BackButton'
+  14: import PriceCard from '../../components/ui/PriceCard'
+  15: import ProductSearchInput from '../../components/ui/ProductSearchInput'
+  16:
+  17: export default function ConfirmPrice() {
+  18:   const { user } = useAuth()
+  19:   const navigate = useNavigate()
+  20:   const [productSearch, setProductSearch] = useState('')
+  21:   const [productId, setProductId] = useState('')
+  22:   const [productDisplay, setProductDisplay] = useState('')
+  23:
+  24:   /* â”€â”€ Queries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  25:
+  26:   const { data: products } = useProductSearch(productSearch, { fields: 'id, name, brand' })
+  27:
+  28:   const { data: prices, isLoading: pricesLoading } = useQuery({
+  29:     queryKey: ['current-prices', productId],
+  30:     queryFn: async () => {
+  31:       const { data } = await supabase.from('current_prices').select('id, price, is_available, created_at, confirmation_count, store_id, user_id, contributor_name').eq('product_id', productId)
+  32:       if (!data?.length) return []
+  33:       const storeIds = [...new Set(data.map((p) => p.store_id))]
+  34:       const { data: stores } = await supabase.from('stores').select('id, name, address').in('id', storeIds)
+  35:       const storeMap = Object.fromEntries((stores || []).map((s) => [s.id, s]))
+  36:       return data.map((p) => ({ ...p, store: storeMap[p.store_id] }))
+  37:     },
+  38:     enabled: !!productId,
+  39:   })
+  40:
+  41:   const { data: myConfirmations } = useMyConfirmations(user?.id, `cp-${productId}`)
+  42:
+  43:   const confirmMutation = useConfirmPrice(user?.id, [
+  44:     ['current-prices', productId],
+  45:     ['my-confirmations', `cp-${productId}`],
+  46:   ])
+  47:
+  48:   /* â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  49:
+  50:   const handleProductChange = (val) => {
+  51:     setProductSearch(val)
+  52:     setProductId('')
+  53:     setProductDisplay('')
+  54:   }
+  55:
+  56:   const handleProductSelect = (p) => {
+  57:     setProductId(p.id)
+  58:     setProductDisplay(`${p.name}${p.brand ? ` (${p.brand})` : ''}`)
+  59:     setProductSearch('')
+  60:   }
+  61:
+  62:   /* â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  63:
+  64:   return (
+  65:     <div className="page">
+  66:       <BackButton onClick={() => navigate('/contribute')} />
+  67:       <h2 className="text-2xl font-bold tracking-tight text-gray-900">Confirm Price</h2>
+  68:       <p className="text-sm text-gray-500 mt-1 mb-5">Verify that an existing price is still accurate.</p>
+  69:
+  70:       <div className="flex flex-col gap-4">
+  71:         <ProductSearchInput
+  72:           value={productId ? productDisplay : productSearch}
+  73:           onChange={handleProductChange}
+  74:           onSelect={handleProductSelect}
+  75:           results={products || []}
+  76:           showDropdown={!productId}
+  77:         />
+  78:       </div>
+  79:
+  80:       {productId && pricesLoading && <p className="text-center py-10 text-gray-500 text-sm">Loading prices...</p>}
+  81:       {productId && !pricesLoading && prices?.length === 0 && <p className="text-center py-10 text-gray-500 text-sm">No prices found for this product.</p>}
+  82:
+  83:       {prices?.length > 0 && (
+  84:         <div className="flex flex-col gap-2.5 mt-4">
+  85:           {prices.map((p) => (
+  86:             <PriceCard
+  87:               key={p.id}
+  88:               price={p}
+  89:               myConfirmations={myConfirmations}
+  90:               currentUserId={user?.id}
+  91:               onConfirm={confirmMutation.mutate}
+  92:               onDeny={confirmMutation.mutate}
+  93:               isPending={confirmMutation.isPending}
+  94:             />
+  95:           ))}
+  96:         </div>
+  97:       )}
+  98:     </div>
+  99:   )
+ 100: }
+PS>$global:?
+True
+**********************
+Windows PowerShell transcript end
+End time: 20260424153303
+**********************
