@@ -131,7 +131,7 @@ export default function SearchPage() {
             <SectionTitle>Recently Updated</SectionTitle>
             {recentlyUpdated?.length > 0 ? (
               <div className="flex flex-col gap-2 mt-4">
-                {recentlyUpdated.map((p) => {
+                {recentlyUpdated.map((p, index) => {
                   // Calculate price comparison
                   const currentPrice = Number(p.price)
                   const avgData = avgPrices?.find(avg => avg.product_id === p.product_id)
@@ -142,7 +142,15 @@ export default function SearchPage() {
                   const isHigher = priceDiff > 0
                   
                   return (
-                    <div key={p.id} className="bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { recent.add({ id: p.product_id, name: p.products?.name, brand: p.products?.brand }); navigate(`/product/${p.product_id}`) }}>
+                    <div 
+                      key={p.id} 
+                      className="bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-all duration-700 ease-out hover:scale-[1.02] hover:shadow-md" 
+                      style={{ 
+                        animationDelay: `${index * 150}ms`,
+                        animation: 'fadeInUp 0.8s ease-out forwards'
+                      }}
+                      onClick={() => { recent.add({ id: p.product_id, name: p.products?.name, brand: p.products?.brand }); navigate(`/product/${p.product_id}`) }}
+                    >
                       <div className="flex gap-3 items-center">
                         {/* Image Placeholder */}
                         <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500 shrink-0">
@@ -199,12 +207,15 @@ export default function SearchPage() {
                           </div>
 
                           {/* Available Locations */}
-                          <span className="text-xs text-gray-500 mt-0.5">
-                            <span className="inline-flex items-center gap-1 text-[0.72rem] text-gray-400">
-                              <MapPin size={11} />{p.stores?.name ? p.stores.name : 'Location info unavailable'}
-                              <Clock size={11} className="ml-2" />{timeAgo(p.created_at)}
+                          <div className="flex items-center justify-between text-xs text-gray-500 mt-0.5">
+                            <span className="inline-flex items-center gap-1 text-[0.72rem] text-gray-400 truncate min-w-0">
+                              <MapPin size={11} className="shrink-0" />
+                              <span className="truncate">{p.stores?.name ? p.stores.name : 'Location info unavailable'}</span>
                             </span>
-                          </span>
+                            <span className="inline-flex items-center gap-1 text-[0.72rem] text-gray-400 shrink-0 ml-2">
+                              <Clock size={11} />{timeAgo(p.created_at)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
