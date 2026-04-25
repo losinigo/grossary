@@ -4,6 +4,7 @@ import { AuthProvider } from './lib/hooks/useAuth'
 import Layout from './components/Layout'
 import SearchPage from './features/search/SearchPage'
 import ProductDetail from './features/search/ProductDetail'
+import ProductDetailNew from './features/search/ProductDetail NEW'
 import ContributePage from './features/contribute/ContributePage'
 import AddStore from './features/contribute/AddStore'
 import AddItem from './features/contribute/AddItem'
@@ -29,6 +30,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route index element={<SearchPage />} />
               <Route path="product/:id" element={<ProductDetail />} />
+              <Route path="product/v2/:id" element={<ProductDetailNew />} />
               <Route path="contribute" element={<ContributePage />} />
               <Route path="contribute/store" element={<AddStore />} />
               <Route path="contribute/item" element={<AddItem />} />

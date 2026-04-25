@@ -70,7 +70,7 @@ export default function ProductDetail() {
         <img
           src={product.image_url}
           alt={product.name}
-          className="h-56 w-full rounded-md bg-gray-100 object-cover"
+          className="h-56 w-full rounded-md bg-gray-100 object-contain"
         />
       ) : (
         <div className="flex h-56 w-full items-center justify-center rounded-md bg-gray-100 text-gray-400">

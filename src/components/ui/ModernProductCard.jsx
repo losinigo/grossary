@@ -30,8 +30,8 @@ export default function ModernProductCard({ data, onClick, index, avgPrices }) {
     
     if (hasComparison) {
       const priceDiff = ((price - avgPrice) / avgPrice) * 100
-      const isLower = priceDiff < 0
-      const isHigher = priceDiff > 0
+      const isLower = priceDiff > 0
+      const isHigher = priceDiff < 0
       
       priceComparison = {
         avgPrice,
