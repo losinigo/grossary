@@ -7,7 +7,7 @@
  * @param {number}   [index]  – for staggered animations
  * @param {object}   [avgPrices] – for price comparison (recently updated only)
  */
-import { MapPin, Clock, TrendingDown, TrendingUp } from 'lucide-react'
+import { MapPin, Clock, TrendingDown, TrendingUp, ImageIcon } from 'lucide-react'
 import { timeAgo } from '../../lib/utils'
 
 export default function ModernProductCard({ data, onClick, index, avgPrices }) {
@@ -27,12 +27,12 @@ export default function ModernProductCard({ data, onClick, index, avgPrices }) {
     const avgData = avgPrices.find(avg => avg.product_id === productId)
     const avgPrice = avgData ? Number(avgData.avg_price) : 0
     const hasComparison = avgPrice && avgPrice > 0
-    
+
     if (hasComparison) {
       const priceDiff = ((price - avgPrice) / avgPrice) * 100
       const isLower = priceDiff > 0
       const isHigher = priceDiff < 0
-      
+
       priceComparison = {
         avgPrice,
         priceDiff,
@@ -44,9 +44,9 @@ export default function ModernProductCard({ data, onClick, index, avgPrices }) {
   }
 
   return (
-    <div 
-      className="bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-all duration-700 ease-out hover:scale-[1.02] hover:shadow-md" 
-      style={index !== undefined ? { 
+    <div
+      className="bg-white border border-gray-200 rounded-md px-4 py-3.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-all duration-700 ease-out hover:scale-[1.02] hover:shadow-md"
+      style={index !== undefined ? {
         animationDelay: `${index * 150}ms`,
         animation: 'fadeInUp 0.8s ease-out forwards'
       } : {}}
@@ -55,10 +55,10 @@ export default function ModernProductCard({ data, onClick, index, avgPrices }) {
       <div className="flex gap-3 items-center">
         {/* Image Placeholder */}
         {imageUrl ? (
-          <img src={imageUrl} alt="" className="h-16 w-16 rounded-md object-cover shrink-0 bg-gray-100" />
+          <img src={imageUrl} alt="" className="h-16 w-16 rounded-md object-cover shrink-0 bg-gray-200" />
         ) : (
           <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500 shrink-0">
-            IMG
+            <ImageIcon size={28} />
           </div>
         )}
 
@@ -95,11 +95,10 @@ export default function ModernProductCard({ data, onClick, index, avgPrices }) {
                 </span>
 
                 {(priceComparison.isLower || priceComparison.isHigher) && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                    priceComparison.isLower 
-                      ? 'bg-red-50 text-red-600' 
+                  <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${priceComparison.isLower
+                      ? 'bg-red-50 text-red-600'
                       : 'bg-green-50 text-green-600'
-                  }`}>
+                    }`}>
                     {Math.abs(priceComparison.priceDiff).toFixed(0)}%
                     {priceComparison.isLower ? (
                       <TrendingDown className="w-3 h-3" />
