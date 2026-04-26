@@ -18,6 +18,7 @@ import ShoppingListsPage from './features/lists/ShoppingListsPage'
 import ShoppingListDetail from './features/lists/ShoppingListDetail'
 import ProfilePage from './features/profile/ProfilePage'
 import ContributionsPage from './features/profile/ContributionsPage'
+import AdminProductsPage from './features/admin/AdminProductsPage'
 
 const queryClient = new QueryClient()
 
@@ -44,6 +45,7 @@ export default function App() {
               <Route path="lists/:id" element={<ShoppingListDetail />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="profile/contributions" element={<ContributionsPage />} />
+              <Route path="admin/products" element={<AdminProductsPage />} />
             </Route>
           </Routes>
         </HashRouter>

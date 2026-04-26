@@ -3,10 +3,12 @@
  * and full price history. Users can confirm or deny reported prices.
  */
 import { useParams, useNavigate } from 'react-router-dom'
-import { ImageIcon, Check, X, Clock } from 'lucide-react'
+import { ImageIcon, Check, X, Clock, Edit2, Trash2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { useUserRole } from '../../lib/hooks/useUserRole'
+import useEditProduct from '../../lib/hooks/useEditProduct'
 import { timeAgo } from '../../lib/utils'
 import useConfirmPrice from '../../lib/hooks/useConfirmPrice'
 import useMyConfirmations from '../../lib/hooks/useMyConfirmations'
@@ -18,6 +20,8 @@ export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { isAdmin } = useUserRole()
+  const { deleteProduct, isPending: isDeleting } = useEditProduct()
 
   /* ── Queries ─────────────────────────────────────────────── */
 
@@ -58,6 +62,21 @@ export default function ProductDetail() {
     ['my-confirmations', id],
   ])
 
+  /* ── Handlers ──────────────────────────────────────────────── */
+
+  const handleDeleteProduct = async () => {
+    if (!window.confirm('Are you sure you want to delete this product? This cannot be undone.')) {
+      return
+    }
+
+    try {
+      await deleteProduct(id)
+      navigate('/')
+    } catch (err) {
+      alert('Failed to delete product: ' + err.message)
+    }
+  }
+
   /* ── Render ──────────────────────────────────────────────── */
 
   if (productLoading) return <div className="page"><p>Loading...</p></div>
@@ -88,6 +107,27 @@ export default function ProductDetail() {
         {product.barcode && <span className="text-xs text-gray-400 font-mono bg-gray-100 px-2 py-1 rounded-sm self-start mt-1">{product.barcode}</span>}
       </div>
 
+      {/* Admin Controls */}
+      {isAdmin && (
+        <div className="flex gap-2 mb-5">
+          <button
+            onClick={() => navigate(`/admin/products`)}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <Edit2 size={16} />
+            Edit Product
+          </button>
+          <button
+            onClick={handleDeleteProduct}
+            disabled={isDeleting}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+          >
+            <Trash2 size={16} />
+            Delete
+          </button>
+        </div>
+      )}
+
       {/* Best Price Section */}
       {currentPrices && currentPrices.length > 0 ? (
         <>
@@ -96,14 +136,14 @@ export default function ProductDetail() {
             return bestPrice ? (
               <section className="mb-6">
                 <h3 className="text-sm font-semibold text-gray-900 mb-2.5">Best Price Available</h3>
-                <div className="bg-white border-2 border-green-200 rounded-md px-4 py-4 shadow-sm">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-md px-4 py-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-3xl font-bold text-green">₱{bestPrice.price.toFixed(2)}</span>
-                    <span className="text-xs font-medium text-gray-500">{bestPrice.confirmation_count} confirmations</span>
+                    <span className="text-3xl font-bold text-white">₱{bestPrice.price.toFixed(2)}</span>
+                    <span className="text-xs font-medium text-white">{bestPrice.confirmation_count} confirmations</span>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-gray-900">{bestPrice.store?.name}</p>
-                    <p className="text-xs text-gray-600">{bestPrice.store?.address}</p>
+                    <p className="text-sm font-medium text-white">{bestPrice.store?.name}</p>
+                    <p className="text-xs text-white">{bestPrice.store?.address}</p>
                   </div>
                 </div>
               </section>
@@ -132,11 +172,11 @@ export default function ProductDetail() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{price.store?.name}</p>
                     <p className="text-xs text-gray-500">{price.store?.address}</p>
-                    {isMyPrice && <p className="text-xs text-blue-600 font-medium mt-1">Added by you</p>}
+                    {isMyPrice && <p className="text-xs text-blue-500 font-medium mt-1">Added by you</p>}
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-[0.95rem] font-bold text-green">₱{price.price.toFixed(2)}</p>
+                      <p className="text-[0.95rem] font-bold text-blue-500">₱{price.price.toFixed(2)}</p>
                       <p className="text-xs text-gray-500">{price.confirmation_count} confirmations</p>
                     </div>
                     {!isMyPrice && user && (
@@ -200,13 +240,13 @@ export default function ProductDetail() {
                         {!entry.is_available && (
                           <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded">Out of Stock</span>
                         )}
-                        {isMyEntry && <span className="text-xs font-medium text-blue-600">Your entry</span>}
+                        {isMyEntry && <span className="text-xs font-medium text-blue-500">Your entry</span>}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-[0.95rem] font-bold text-green">₱{entry.price.toFixed(2)}</p>
+                      <p className="text-[0.95rem] font-bold text-blue-500">₱{entry.price.toFixed(2)}</p>
                       <span className="inline-flex items-center gap-1 text-[0.7rem] text-gray-400"><Clock size={11} /> {timeAgo(entry.created_at)}</span>
                     </div>
                     {!isMyEntry && user && (

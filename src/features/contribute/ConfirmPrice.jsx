@@ -4,18 +4,22 @@
  */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Lock } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { useUserRole } from '../../lib/hooks/useUserRole'
 import useProductSearch from '../../lib/hooks/useProductSearch'
 import useConfirmPrice from '../../lib/hooks/useConfirmPrice'
 import useMyConfirmations from '../../lib/hooks/useMyConfirmations'
 import BackButton from '../../components/ui/BackButton'
 import PriceCard from '../../components/ui/PriceCard'
 import ProductSearchInput from '../../components/ui/ProductSearchInput'
+import EmptyState from '../../components/ui/EmptyState'
 
 export default function ConfirmPrice() {
   const { user } = useAuth()
+  const { canConfirmPrices, isLoading: roleLoading } = useUserRole()
   const navigate = useNavigate()
   const [productSearch, setProductSearch] = useState('')
   const [productId, setProductId] = useState('')
@@ -60,7 +64,23 @@ export default function ConfirmPrice() {
   }
 
   /* ── Render ──────────────────────────────────────────────── */
+if (roleLoading) return <div className="page"><p>Loading...</p></div>
 
+  if (!canConfirmPrices) {
+    return (
+      <div className="page">
+        <BackButton onClick={() => navigate('/contribute')} />
+        <EmptyState
+          icon={<Lock size={48} color="var(--color-gray-300)" strokeWidth={1.2} />}
+          title="Sign in to confirm prices"
+          message="Only logged-in users can verify grocery prices."
+          action={<button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity" onClick={() => navigate('/contribute')}>Go Back</button>}
+        />
+      </div>
+    )
+  }
+
+  
   return (
     <div className="page">
       <BackButton onClick={() => navigate('/contribute')} />

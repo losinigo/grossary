@@ -1,11 +1,12 @@
 /**
- * NavBar — Fixed bottom tab bar with five navigation tabs:
- * Search, Add, Lists, Community, and Profile.
+ * NavBar — Fixed bottom tab bar with navigation tabs:
+ * Search, Add, Lists, Community, Profile, and Admin (if admin).
  */
 import { NavLink } from 'react-router-dom'
-import { Search, PlusCircle, Users, User, ShoppingCart } from 'lucide-react'
+import { Search, PlusCircle, Users, User, ShoppingCart, Settings } from 'lucide-react'
+import { useUserRole } from '../lib/hooks/useUserRole'
 
-const tabs = [
+const baseTabs = [
   { to: '/', label: 'Search', icon: Search },
   { to: '/contribute', label: 'Add', icon: PlusCircle },
   { to: '/lists', label: 'Lists', icon: ShoppingCart },
@@ -13,7 +14,14 @@ const tabs = [
   { to: '/profile', label: 'Profile', icon: User },
 ]
 
+const adminTab = { to: '/admin/products', label: 'Admin', icon: Settings }
+
 export default function NavBar() {
+  const { isAdmin, isLoading } = useUserRole()
+
+  const tabs = isAdmin ? [...baseTabs, adminTab] : baseTabs
+
+  if (isLoading) return null
   return (
     <nav className="fixed bottom-0 left-0 right-0 flex bg-white/92 backdrop-blur-xl border-t border-gray-200 pb-[env(safe-area-inset-bottom,8px)] pt-1.5 z-100">
       {tabs.map(({ to, label, icon: Icon }) => (

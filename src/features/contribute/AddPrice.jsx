@@ -4,12 +4,15 @@
  */
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Lock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { useUserRole } from '../../lib/hooks/useUserRole'
 import useProductSearch from '../../lib/hooks/useProductSearch'
 import useStoreList from '../../lib/hooks/useStoreList'
 import BackButton from '../../components/ui/BackButton'
 import ProductSearchInput from '../../components/ui/ProductSearchInput'
+import EmptyState from '../../components/ui/EmptyState'
 
 const inputCls = 'w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-sm text-[0.95rem] text-gray-900 outline-none focus:border-primary font-[inherit] placeholder:text-gray-400'
 const labelCls = 'flex flex-col gap-1.5 text-xs font-semibold text-gray-500'
@@ -17,6 +20,7 @@ const selectCls = `${inputCls} appearance-none bg-[url("data:image/svg+xml,%3Csv
 
 export default function AddPrice() {
   const { user } = useAuth()
+  const { canConfirmPrices, isLoading: roleLoading } = useUserRole()
   const navigate = useNavigate()
   const prefill = useLocation().state
 
@@ -65,7 +69,23 @@ export default function AddPrice() {
   }
 
   /* ── Render ──────────────────────────────────────────────── */
+if (roleLoading) return <div className="page"><p>Loading...</p></div>
 
+  if (!canConfirmPrices) {
+    return (
+      <div className="page">
+        <BackButton onClick={() => navigate('/contribute')} />
+        <EmptyState
+          icon={<Lock size={48} color="var(--color-gray-300)" strokeWidth={1.2} />}
+          title="Sign in to update prices"
+          message="Only logged-in users can report grocery prices."
+          action={<button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity" onClick={() => navigate('/contribute')}>Go Back</button>}
+        />
+      </div>
+    )
+  }
+
+  
   return (
     <div className="page">
       <BackButton onClick={() => navigate('/contribute')} />

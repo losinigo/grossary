@@ -3,8 +3,9 @@
  * Requires authentication; shows a sign-in prompt for unauthenticated users.
  */
 import { useNavigate, useLocation } from 'react-router-dom'
-import { PackagePlus, DollarSign, ShieldCheck, StoreIcon, LogIn } from 'lucide-react'
+import { PackagePlus, DollarSign, ShieldCheck, StoreIcon, LogIn, Lock } from 'lucide-react'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { useUserRole } from '../../lib/hooks/useUserRole'
 import EmptyState from '../../components/ui/EmptyState'
 
 const actions = [
@@ -16,9 +17,10 @@ const actions = [
 
 export default function ContributePage() {
   const { user, loading, signInWithGoogle } = useAuth()
+  const { role, isLoading: roleLoading } = useUserRole()
   const navigate = useNavigate()
   const success = useLocation().state?.success
-
+ || roleLoading
   if (loading) return <div className="page"><p>Loading...</p></div>
 
   if (!user) {
@@ -46,6 +48,16 @@ export default function ContributePage() {
       {success && (
         <div className="bg-green-light text-[#1a7d36] px-3.5 py-2.5 rounded-sm text-sm font-medium mb-4">
           {success}
+        </div>
+      )}
+
+      {role === 'free' && (
+        <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-md px-4 py-3 mb-5">
+          <Lock size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-blue-900">Free Member Features</p>
+            <p className="text-xs text-blue-700 mt-0.5">Upgrade to premium to upload and edit product photos.</p>
+          </div>
         </div>
       )}
 

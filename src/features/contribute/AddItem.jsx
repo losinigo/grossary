@@ -4,11 +4,13 @@
  */
 import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ImagePlus, ScanBarcode, X } from 'lucide-react'
+import { ImagePlus, ScanBarcode, X, Lock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/hooks/useAuth'
+import { useUserRole } from '../../lib/hooks/useUserRole'
 import BarcodeScanner from '../../components/BarcodeScanner'
 import BackButton from '../../components/ui/BackButton'
+import EmptyState from '../../components/ui/EmptyState'
 
 /** Predefined unit options grouped by type */
 const UNIT_PRESETS = {
@@ -23,6 +25,7 @@ const selectCls = `${inputCls} appearance-none bg-[url("data:image/svg+xml,%3Csv
 
 export default function AddItem() {
   const { user } = useAuth()
+  const { canAddItems, isLoading: roleLoading } = useUserRole()
   const navigate = useNavigate()
   const location = useLocation()
   const [name, setName] = useState('')
@@ -122,7 +125,23 @@ export default function AddItem() {
   }
 
   /* ── Render ──────────────────────────────────────────────── */
+if (roleLoading) return <div className="page"><p>Loading...</p></div>
 
+  if (!canAddItems) {
+    return (
+      <div className="page">
+        <BackButton onClick={() => navigate('/contribute')} />
+        <EmptyState
+          icon={<Lock size={48} color="var(--color-gray-300)" strokeWidth={1.2} />}
+          title="Sign in to add items"
+          message="Only logged-in users can add grocery products."
+          action={<button className="inline-flex items-center gap-1.5 mt-3 px-7 py-3 bg-primary text-white text-sm font-semibold rounded-full hover:opacity-88 transition-opacity" onClick={() => navigate('/contribute')}>Go Back</button>}
+        />
+      </div>
+    )
+  }
+
+  
   return (
     <div className="page">
       <BackButton onClick={() => navigate('/contribute')} />
