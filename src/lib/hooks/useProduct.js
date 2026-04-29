@@ -133,7 +133,7 @@ export function useProductHistory(productId, limit = 20) {
     queryFn: async () => {
       const { data } = await supabase
         .from('prices')
-        .select('id, price, created_at, is_available, stores(name), profiles:user_id(display_name, avatar_url)')
+        .select('id, price, created_at, is_available, user_id, stores(name), profiles:user_id(display_name, avatar_url), confirmations(confirmed)')
         .eq('product_id', productId)
         .order('created_at', { ascending: false })
         .limit(limit)
