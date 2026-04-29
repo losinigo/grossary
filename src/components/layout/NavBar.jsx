@@ -4,7 +4,7 @@
  */
 import { NavLink } from 'react-router-dom'
 import { Search, PlusCircle, Users, User, ShoppingCart, Settings } from 'lucide-react'
-import { useUserRole } from '../lib/hooks/useUserRole'
+import { useUserRole } from '../../lib/hooks'
 
 const baseTabs = [
   { to: '/', label: 'Search', icon: Search },

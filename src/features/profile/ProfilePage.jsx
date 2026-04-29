@@ -4,7 +4,7 @@
  */
 import { useNavigate } from 'react-router-dom'
 import { User, TrendingUp, CheckCircle, Clock, LogOut } from 'lucide-react'
-import { useAuth } from '../../lib/hooks/useAuth'
+import { useAuth } from '../../lib/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 

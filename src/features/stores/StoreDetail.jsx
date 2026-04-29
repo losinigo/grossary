@@ -5,8 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { MapPin } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import BackButton from '../../components/ui/BackButton'
-import ProductCard from '../../components/ui/ProductCard'
+import { BackButton, ProductCard } from '../../components'
 
 export default function StoreDetail() {
   const { id } = useParams()

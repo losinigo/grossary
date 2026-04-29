@@ -6,11 +6,8 @@ import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ImagePlus, ScanBarcode, X, Lock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
-import { useUserRole } from '../../lib/hooks/useUserRole'
-import BarcodeScanner from '../../components/BarcodeScanner'
-import BackButton from '../../components/ui/BackButton'
-import EmptyState from '../../components/ui/EmptyState'
+import { useAuth, useUserRole } from '../../lib/hooks'
+import { BarcodeScanner, BackButton, EmptyState } from '../../components'
 
 /** Predefined unit options grouped by type */
 const UNIT_PRESETS = {

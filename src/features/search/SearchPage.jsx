@@ -8,15 +8,8 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, ScanBarcode, PlusCircle } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
-import useGeolocation from '../../lib/hooks/useGeolocation'
-import useRecentSearches from '../../lib/hooks/useRecentSearches'
-import BarcodeScanner from '../../components/BarcodeScanner'
-import ModernProductCard from '../../components/ui/ModernProductCard'
-import StoreCard from '../../components/ui/StoreCard'
-import SectionTitle from '../../components/ui/SectionTitle'
-import EmptyState from '../../components/ui/EmptyState'
+import { useGeolocation, useRecentlyUpdatedProducts, useProductAverages, useProductSearch, useStoreSearch } from '../../lib/hooks'
+import { BarcodeScanner, ModernProductCard, StoreCard, SectionTitle, EmptyState } from '../../components'
 
 export default function SearchPage() {
   const [query, setQuery] = useState('')
@@ -25,60 +18,13 @@ export default function SearchPage() {
   const [scannedBarcode, setScannedBarcode] = useState(null)
   const navigate = useNavigate()
   const { coords, coordsRef, requestLocation } = useGeolocation()
-  const recent = useRecentSearches()
 
   /* ── Queries ─────────────────────────────────────────────── */
 
-  const { data: results, isLoading } = useQuery({
-    queryKey: ['search', searchTerm, coords?.lat, coords?.lng],
-    queryFn: async () => {
-      const loc = coordsRef.current
-      if (loc) {
-        const { data } = await supabase.rpc('search_products_nearby', { search_term: searchTerm, user_lat: loc.lat, user_lon: loc.lng, radius_km: 25 })
-        return data || []
-      }
-      const { data } = await supabase.rpc('search_products', { search_term: searchTerm })
-      return (data || []).map((p) => ({ ...p, product_id: p.id, product_name: p.name }))
-    },
-    enabled: searchTerm.length > 0,
-  })
-
-  const { data: storeResults } = useQuery({
-    queryKey: ['search-stores', searchTerm],
-    queryFn: async () => {
-      const { data } = await supabase.from('stores').select('id, name, address').or(`name.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%`).limit(5)
-      return data || []
-    },
-    enabled: searchTerm.length > 0,
-  })
-
-  const { data: recentlyUpdated } = useQuery({
-    queryKey: ['recently-updated'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('prices')
-        .select(`
-          id, 
-          price, 
-          created_at, 
-          product_id,
-          products(name, brand, image_url),
-          stores(name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(8)
-      return data || []
-    },
-  })
-
-  // Get average prices for comparison
-  const { data: avgPrices } = useQuery({
-    queryKey: ['avg-prices'],
-    queryFn: async () => {
-      const { data } = await supabase.rpc('get_product_averages')
-      return data || []
-    },
-  })
+  const { data: results, isLoading } = useProductSearch(searchTerm, coords)
+  const { data: storeResults } = useStoreSearch(searchTerm)
+  const { data: recentlyUpdated } = useRecentlyUpdatedProducts()
+  const { data: avgPrices } = useProductAverages()
 
   /* ── Handlers ────────────────────────────────────────────── */
 
@@ -92,14 +38,8 @@ export default function SearchPage() {
   const handleScan = (code) => { setScanning(false); setScannedBarcode(code); setQuery(code); doSearch(code) }
 
   const handleProductClick = useCallback((r) => {
-    recent.add({ id: r.product_id, name: r.product_name, brand: r.brand })
     navigate(`/product/${r.product_id}`)
-  }, [navigate, recent])
-
-  const handleRemoveRecent = useCallback((e, id) => {
-    e.stopPropagation()
-    recent.remove(id)
-  }, [recent])
+  }, [navigate])
 
   /* ── Derived state ───────────────────────────────────────── */
 
@@ -112,6 +52,8 @@ export default function SearchPage() {
 
   return (
     <div className="page">
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900">Search</h2>
+      <p className="text-sm text-gray-500 mt-1 mb-5">Search for the grocery prices nearby.</p>
       {/* Search bar */}
       <form className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-md px-4 py-2.5 shadow-sm" onSubmit={handleSearch}>
         <Search size={18} color="var(--color-gray-400)" />
@@ -120,6 +62,8 @@ export default function SearchPage() {
           <ScanBarcode size={20} />
         </button>
       </form>
+
+
 
       {/* Idle state — recent searches + recently updated */}
       {showIdle && (
@@ -134,7 +78,7 @@ export default function SearchPage() {
                     data={p}
                     index={index}
                     avgPrices={avgPrices}
-                    onClick={() => { recent.add({ id: p.product_id, name: p.products?.name, brand: p.products?.brand }); navigate(`/product/${p.product_id}`) }}
+                    onClick={() => { navigate(`/product/${p.product_id}`) }}
                   />
                 ))}
               </div>

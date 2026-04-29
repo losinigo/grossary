@@ -6,13 +6,8 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Lock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
-import { useUserRole } from '../../lib/hooks/useUserRole'
-import useProductSearch from '../../lib/hooks/useProductSearch'
-import useStoreList from '../../lib/hooks/useStoreList'
-import BackButton from '../../components/ui/BackButton'
-import ProductSearchInput from '../../components/ui/ProductSearchInput'
-import EmptyState from '../../components/ui/EmptyState'
+import { useAuth, useUserRole, useProductSearch, useStoreList } from '../../lib/hooks'
+import { BackButton, ProductSearchInput, EmptyState } from '../../components'
 
 const inputCls = 'w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-sm text-[0.95rem] text-gray-900 outline-none focus:border-primary font-[inherit] placeholder:text-gray-400'
 const labelCls = 'flex flex-col gap-1.5 text-xs font-semibold text-gray-500'
@@ -69,7 +64,7 @@ export default function AddPrice() {
   }
 
   /* ── Render ──────────────────────────────────────────────── */
-if (roleLoading) return <div className="page"><p>Loading...</p></div>
+  if (roleLoading) return <div className="page"><p>Loading...</p></div>
 
   if (!canConfirmPrices) {
     return (
@@ -85,7 +80,7 @@ if (roleLoading) return <div className="page"><p>Loading...</p></div>
     )
   }
 
-  
+
   return (
     <div className="page">
       <BackButton onClick={() => navigate('/contribute')} />

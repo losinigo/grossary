@@ -6,8 +6,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { TrendingUp, Users, UserPlus, UserMinus, User } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
-import BackButton from '../../components/ui/BackButton'
+import { useAuth } from '../../lib/hooks'
+import { BackButton } from '../../components'
 
 export default function MemberProfile() {
   const { id } = useParams()

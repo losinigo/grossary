@@ -6,8 +6,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapPin, Loader } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
-import BackButton from '../../components/ui/BackButton'
+import { useAuth } from '../../lib/hooks'
+import { BackButton } from '../../components'
 
 const inputCls = 'w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-sm text-[0.95rem] text-gray-900 outline-none transition-colors focus:border-primary font-[inherit] placeholder:text-gray-400'
 

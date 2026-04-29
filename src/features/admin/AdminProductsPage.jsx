@@ -7,10 +7,8 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Edit2, Trash2, ImageIcon, ChevronLeft, X, ImagePlus } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
-import { useUserRole } from '../../lib/hooks/useUserRole'
-import useEditProduct from '../../lib/hooks/useEditProduct'
-import EmptyState from '../../components/ui/EmptyState'
+import { useAuth, useUserRole, useEditProduct } from '../../lib/hooks'
+import { EmptyState } from '../../components'
 
 export default function AdminProductsPage() {
   const navigate = useNavigate()

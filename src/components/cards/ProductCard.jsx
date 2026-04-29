@@ -11,7 +11,7 @@
  */
 import { MapPin, Clock, Users } from 'lucide-react'
 import { timeAgo } from '../../lib/utils'
-import Avatar from '../Avatar'
+import { Avatar } from '../index'
 
 const meta = 'inline-flex items-center gap-1 text-xs text-gray-500'
 

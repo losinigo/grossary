@@ -7,7 +7,7 @@ import { useAuth } from './useAuth'
  * Usage:
  *   const { role, isPremium, isAdmin, canUploadPhotos } = useUserRole()
  */
-export function useUserRole() {
+export default function useUserRole() {
   const { user } = useAuth()
 
   const { data: userRole = 'free', isLoading } = useQuery({

@@ -7,8 +7,8 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, ShoppingCart, Trash2, CheckCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
-import EmptyState from '../../components/ui/EmptyState'
+import { useAuth } from '../../lib/hooks'
+import { EmptyState } from '../../components'
 
 const inputCls = 'w-full px-4 py-3 bg-white border border-gray-200 rounded-sm text-[0.95rem] text-gray-900 outline-none focus:border-primary font-[inherit] placeholder:text-gray-400 mb-3'
 

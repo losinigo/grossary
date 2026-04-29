@@ -7,10 +7,9 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Trophy, MapPin, Clock } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
+import { useAuth } from '../../lib/hooks'
 import { timeAgo } from '../../lib/utils'
-import Avatar from '../../components/Avatar'
-import EmptyState from '../../components/ui/EmptyState'
+import { Avatar, EmptyState } from '../../components'
 
 export default function CommunityPage() {
   const [query, setQuery] = useState('')

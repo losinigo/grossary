@@ -4,9 +4,8 @@
  */
 import { useNavigate, useLocation } from 'react-router-dom'
 import { PackagePlus, DollarSign, ShieldCheck, StoreIcon, LogIn, Lock } from 'lucide-react'
-import { useAuth } from '../../lib/hooks/useAuth'
-import { useUserRole } from '../../lib/hooks/useUserRole'
-import EmptyState from '../../components/ui/EmptyState'
+import { useAuth, useUserRole } from '../../lib/hooks'
+import { EmptyState } from '../../components'
 
 const actions = [
   { icon: PackagePlus, label: 'Add New Item', desc: 'Scan or enter a new grocery product', path: '/contribute/item' },

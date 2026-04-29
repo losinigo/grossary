@@ -6,9 +6,9 @@ import { useNavigate } from 'react-router-dom'
 import { PackagePlus, StoreIcon, DollarSign, ShieldCheck } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
+import { useAuth } from '../../lib/hooks'
 import { timeAgo } from '../../lib/utils'
-import BackButton from '../../components/ui/BackButton'
+import { BackButton } from '../../components'
 
 export default function ContributionsPage() {
   const { user } = useAuth()

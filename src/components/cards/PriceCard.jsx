@@ -11,7 +11,7 @@
  */
 import { MapPin, Users, CheckCircle, XCircle } from 'lucide-react'
 import { timeAgo } from '../../lib/utils'
-import Avatar from '../Avatar'
+import { Avatar } from '../index'
 
 const meta = 'inline-flex items-center gap-1 text-xs text-gray-500'
 const confirmBase = 'inline-flex items-center gap-1.5 flex-1 justify-center py-2 px-3 text-[0.82rem] font-semibold rounded-sm transition-opacity disabled:opacity-50'

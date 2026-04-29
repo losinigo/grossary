@@ -7,15 +7,8 @@ import { useNavigate } from 'react-router-dom'
 import { Lock } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
-import { useUserRole } from '../../lib/hooks/useUserRole'
-import useProductSearch from '../../lib/hooks/useProductSearch'
-import useConfirmPrice from '../../lib/hooks/useConfirmPrice'
-import useMyConfirmations from '../../lib/hooks/useMyConfirmations'
-import BackButton from '../../components/ui/BackButton'
-import PriceCard from '../../components/ui/PriceCard'
-import ProductSearchInput from '../../components/ui/ProductSearchInput'
-import EmptyState from '../../components/ui/EmptyState'
+import { useAuth, useUserRole, useProductSearch, useConfirmPrice, useProductConfirmations } from '../../lib/hooks'
+import { BackButton, PriceCard, ProductSearchInput, EmptyState } from '../../components'
 
 export default function ConfirmPrice() {
   const { user } = useAuth()
@@ -42,7 +35,7 @@ export default function ConfirmPrice() {
     enabled: !!productId,
   })
 
-  const { data: myConfirmations } = useMyConfirmations(user?.id, `cp-${productId}`)
+  const { data: myConfirmations } = useProductConfirmations(user?.id, `cp-${productId}`)
 
   const confirmMutation = useConfirmPrice(user?.id, [
     ['current-prices', productId],
@@ -64,7 +57,7 @@ export default function ConfirmPrice() {
   }
 
   /* ── Render ──────────────────────────────────────────────── */
-if (roleLoading) return <div className="page"><p>Loading...</p></div>
+  if (roleLoading) return <div className="page"><p>Loading...</p></div>
 
   if (!canConfirmPrices) {
     return (
@@ -80,7 +73,7 @@ if (roleLoading) return <div className="page"><p>Loading...</p></div>
     )
   }
 
-  
+
   return (
     <div className="page">
       <BackButton onClick={() => navigate('/contribute')} />

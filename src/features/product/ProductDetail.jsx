@@ -3,18 +3,10 @@
  * and full price history. Users can confirm or deny reported prices.
  */
 import { useParams, useNavigate } from 'react-router-dom'
-import { ImageIcon, Check, X, Clock, Edit2, Trash2 } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/hooks/useAuth'
-import { useUserRole } from '../../lib/hooks/useUserRole'
-import useEditProduct from '../../lib/hooks/useEditProduct'
+import { ImageIcon, Check, X, Clock, Edit2, Trash2, MapPin } from 'lucide-react'
+import { useAuth, useUserRole, useProduct, useProductPrices, useProductHistory, useEditProduct, useConfirmPrice, useProductConfirmations } from '../../lib/hooks'
 import { timeAgo } from '../../lib/utils'
-import useConfirmPrice from '../../lib/hooks/useConfirmPrice'
-import useMyConfirmations from '../../lib/hooks/useMyConfirmations'
-import Avatar from '../../components/Avatar'
-import BackButton from '../../components/ui/BackButton'
-import SectionTitle from '../../components/ui/SectionTitle'
+import { Avatar, BackButton, SectionTitle } from '../../components'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -25,37 +17,11 @@ export default function ProductDetail() {
 
   /* ── Queries ─────────────────────────────────────────────── */
 
-  const { data: product, isLoading: productLoading } = useQuery({
-    queryKey: ['product', id],
-    queryFn: async () => {
-      const { data } = await supabase.from('products').select('*').eq('id', id).single()
-      return data
-    },
-  })
+  const { data: product, isLoading: productLoading } = useProduct(id)
+  const { data: currentPrices } = useProductPrices(id)
+  const { data: priceHistory } = useProductHistory(id)
 
-  const { data: currentPrices } = useQuery({
-    queryKey: ['product-prices', id],
-    queryFn: async () => {
-      const { data } = await supabase.from('current_prices').select('id, price, is_available, created_at, confirmation_count, store_id, user_id, contributor_name, contributor_avatar_url').eq('product_id', id)
-      if (!data?.length) return []
-      const storeIds = [...new Set(data.map((p) => p.store_id))]
-      const { data: stores } = await supabase.from('stores').select('id, name, address').in('id', storeIds)
-      const storeMap = Object.fromEntries((stores || []).map((s) => [s.id, s]))
-      return data.map((p) => ({ ...p, store: storeMap[p.store_id] }))
-    },
-    enabled: !!id,
-  })
-
-  const { data: priceHistory } = useQuery({
-    queryKey: ['price-history', id],
-    queryFn: async () => {
-      const { data } = await supabase.from('prices').select('id, price, created_at, is_available, stores(name), profiles:user_id(display_name, avatar_url)').eq('product_id', id).order('created_at', { ascending: false }).limit(20)
-      return data || []
-    },
-    enabled: !!id,
-  })
-
-  const { data: myConfirmations } = useMyConfirmations(user?.id, id)
+  const { data: myConfirmations } = useProductConfirmations(user?.id, id)
 
   const confirmMutation = useConfirmPrice(user?.id, [
     ['product-prices', id],
@@ -100,7 +66,7 @@ export default function ProductDetail() {
           </div>
         </div>
       )}
-      
+
       <div className="flex flex-col gap-1 bg-white border border-gray-200 rounded-md px-4 py-5 shadow-sm mb-5">
         <h2 className="text-lg font-bold text-gray-900">{product.name}</h2>
         {product.brand && <span className="text-sm text-gray-500 font-medium">{product.brand}</span>}
@@ -117,14 +83,7 @@ export default function ProductDetail() {
             <Edit2 size={16} />
             Edit Product
           </button>
-          <button
-            onClick={handleDeleteProduct}
-            disabled={isDeleting}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
-          >
-            <Trash2 size={16} />
-            Delete
-          </button>
+
         </div>
       )}
 
@@ -135,15 +94,15 @@ export default function ProductDetail() {
             const bestPrice = currentPrices.filter(p => p.is_available).sort((a, b) => a.price - b.price)[0]
             return bestPrice ? (
               <section className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2.5">Best Price Available</h3>
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-md px-4 py-4 shadow-sm">
+                <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-md px-4 py-4 shadow-sm">
+                  <h3 className="text-sm font-semibold text-white mb-2.5">Best Price</h3>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-3xl font-bold text-white">₱{bestPrice.price.toFixed(2)}</span>
-                    <span className="text-xs font-medium text-white">{bestPrice.confirmation_count} confirmations</span>
+                    <span className="text-6xl font-bold text-white">₱{bestPrice.price.toFixed(2)}</span>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-white">{bestPrice.store?.name}</p>
-                    <p className="text-xs text-white">{bestPrice.store?.address}</p>
+                  <div className="inline-flex items-center gap-1 text-[0.72rem] text-white truncate min-w-0 align-middle">
+                    <MapPin size={11} className="shrink-0 text-white" />
+                    <p className="text-sm font-medium text-white">
+                      {bestPrice.store?.name}</p>
                   </div>
                 </div>
               </section>
@@ -160,24 +119,23 @@ export default function ProductDetail() {
       {/* Current Prices at All Stores */}
       {currentPrices && currentPrices.length > 1 && (
         <section className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2.5">Prices at Other Stores</h3>
+          <SectionTitle>Prices at Other Stores</SectionTitle>
           <div className="space-y-2">
             {currentPrices.filter(p => p.is_available).map((price) => {
               const isMyPrice = price.user_id === user?.id
               const hasConfirmed = myConfirmations?.[price.id] === true
               const hasDenied = myConfirmations?.[price.id] === false
-              
+
               return (
-                <div key={price.id} className="flex justify-between items-center bg-white border border-gray-200 rounded-md px-4 py-3 shadow-sm">
+                <div key={price.id} className="flex items-center bg-white border border-gray-200 rounded-md px-4 py-3 shadow-sm gap-2">
+                  <MapPin size={11} className="shrink-0" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{price.store?.name}</p>
                     <p className="text-xs text-gray-500">{price.store?.address}</p>
-                    {isMyPrice && <p className="text-xs text-blue-500 font-medium mt-1">Added by you</p>}
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="text-[0.95rem] font-bold text-blue-500">₱{price.price.toFixed(2)}</p>
-                      <p className="text-xs text-gray-500">{price.confirmation_count} confirmations</p>
                     </div>
                     {!isMyPrice && user && (
                       <div className="flex gap-2">
@@ -185,11 +143,10 @@ export default function ProductDetail() {
                           <button
                             onClick={() => confirmMutation.mutate({ priceId: price.id, isConfirmed: true })}
                             disabled={confirmMutation.isPending || hasConfirmed}
-                            className={`p-2 rounded-lg transition-colors ${
-                              hasConfirmed
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700'
-                            } disabled:opacity-50`}
+                            className={`p-2 rounded-lg transition-colors ${hasConfirmed
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700'
+                              } disabled:opacity-50`}
                             title="Confirm this price"
                           >
                             <Check size={18} />
@@ -199,11 +156,10 @@ export default function ProductDetail() {
                           <button
                             onClick={() => confirmMutation.mutate({ priceId: price.id, isConfirmed: false })}
                             disabled={confirmMutation.isPending || hasDenied}
-                            className={`p-2 rounded-lg transition-colors ${
-                              hasDenied
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700'
-                            } disabled:opacity-50`}
+                            className={`p-2 rounded-lg transition-colors ${hasDenied
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700'
+                              } disabled:opacity-50`}
                             title="Deny this price"
                           >
                             <X size={18} />
@@ -222,67 +178,63 @@ export default function ProductDetail() {
       {/* Price History */}
       {priceHistory && priceHistory.length > 0 && (
         <section className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2.5">Recent Price Changes</h3>
+          <SectionTitle>Recent Price Changes</SectionTitle>
           <div className="space-y-2">
             {priceHistory.map((entry) => {
               const isMyEntry = entry.user_id === user?.id
               const hasConfirmed = myConfirmations?.[entry.id] === true
               const hasDenied = myConfirmations?.[entry.id] === false
-              
+
               return (
-                <div key={entry.id} className="flex justify-between items-center bg-white border border-gray-200 rounded-md px-4 py-3 shadow-sm">
-                  <div className="flex items-center gap-2 flex-1">
-                    <Avatar src={entry.profiles?.avatar_url} size={32} />
-                    <div className="flex-1">
+                <>
+                  <div key={entry.id} className="flex justify-between items-center bg-white border border-gray-200 rounded-md px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-2 flex-1">
+                      <Avatar src={entry.profiles?.avatar_url} size={16} />
                       <span className="block text-sm font-medium text-gray-900">{entry.profiles?.display_name || 'Unknown'}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">{entry.stores?.name || ''}</span>
-                        {!entry.is_available && (
-                          <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded">Out of Stock</span>
-                        )}
-                        {isMyEntry && <span className="text-xs font-medium text-blue-500">Your entry</span>}
+                      <div className="flex-1">
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">{entry.stores?.name || ''}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="text-[0.95rem] font-bold text-blue-500">₱{entry.price.toFixed(2)}</p>
-                      <span className="inline-flex items-center gap-1 text-[0.7rem] text-gray-400"><Clock size={11} /> {timeAgo(entry.created_at)}</span>
-                    </div>
-                    {!isMyEntry && user && (
-                      <div className="flex gap-2">
-                        {(hasConfirmed || !hasDenied) && (
-                          <button
-                            onClick={() => confirmMutation.mutate({ priceId: entry.id, isConfirmed: true })}
-                            disabled={confirmMutation.isPending || hasConfirmed}
-                            className={`p-2 rounded-lg transition-colors ${
-                              hasConfirmed
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-[0.95rem] font-bold text-blue-500">₱{entry.price.toFixed(2)}</p>
+                      </div>
+                      {!isMyEntry && user && (
+                        <div className="flex gap-2">
+                          {(hasConfirmed || !hasDenied) && (
+                            <button
+                              onClick={() => confirmMutation.mutate({ priceId: entry.id, isConfirmed: true })}
+                              disabled={confirmMutation.isPending || hasConfirmed}
+                              className={`p-2 rounded-lg transition-colors ${hasConfirmed
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700'
-                            } disabled:opacity-50`}
-                            title="Confirm this price"
-                          >
-                            <Check size={18} />
-                          </button>
-                        )}
-                        {(hasDenied || !hasConfirmed) && (
-                          <button
-                            onClick={() => confirmMutation.mutate({ priceId: entry.id, isConfirmed: false })}
-                            disabled={confirmMutation.isPending || hasDenied}
-                            className={`p-2 rounded-lg transition-colors ${
-                              hasDenied
+                                } disabled:opacity-50`}
+                              title="Confirm this price"
+                            >
+                              <Check size={18} />
+                            </button>
+                          )}
+                          {(hasDenied || !hasConfirmed) && (
+                            <button
+                              onClick={() => confirmMutation.mutate({ priceId: entry.id, isConfirmed: false })}
+                              disabled={confirmMutation.isPending || hasDenied}
+                              className={`p-2 rounded-lg transition-colors ${hasDenied
                                 ? 'bg-red-100 text-red-700'
                                 : 'bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700'
-                            } disabled:opacity-50`}
-                            title="Deny this price"
-                          >
-                            <X size={18} />
-                          </button>
-                        )}
-                      </div>
-                    )}
+                                } disabled:opacity-50`}
+                              title="Deny this price"
+                            >
+                              <X size={18} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </>
               )
             })}
           </div>

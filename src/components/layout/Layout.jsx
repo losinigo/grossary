@@ -4,8 +4,8 @@
  * a scrollable content area (<Outlet />), and the bottom NavBar.
  */
 import { Outlet } from 'react-router-dom'
-import { useAuth } from '../lib/hooks/useAuth'
-import NavBar from './NavBar'
+import { useAuth } from '../../lib/hooks'
+import { NavBar } from '../index'
 
 export default function Layout() {
   const { user } = useAuth()
