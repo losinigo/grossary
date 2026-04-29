@@ -22,7 +22,7 @@ const selectCls = `${inputCls} appearance-none bg-[url("data:image/svg+xml,%3Csv
 
 export default function AddItem() {
   const { user } = useAuth()
-  const { canAddItems, isLoading: roleLoading } = useUserRole()
+  const { canAddItems, canUploadPhotos, isLoading: roleLoading } = useUserRole()
   const navigate = useNavigate()
   const location = useLocation()
   const [name, setName] = useState('')
@@ -85,7 +85,7 @@ export default function AddItem() {
 
     let imageUrl = null
     let imagePath = null
-    if (imageFile) {
+    if (imageFile && canUploadPhotos) {
       const extension = imageFile.name.split('.').pop()?.toLowerCase() || 'jpg'
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`
       imagePath = path
@@ -149,38 +149,40 @@ if (roleLoading) return <div className="page"><p>Loading...</p></div>
         <label className={labelCls}>Item Name *<input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Whole Milk 1L" /></label>
         <label className={labelCls}>Brand<input className={inputCls} value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="e.g. Alaska" /></label>
 
-        <div className={labelCls}>
-          <span>Product Photo</span>
-          <div className="flex flex-col gap-3">
-            {imagePreview ? (
-              <div className="relative overflow-hidden rounded-md border border-gray-200 bg-gray-50">
-                <img src={imagePreview} alt="" className="h-48 w-full object-cover" />
-                <button
-                  type="button"
-                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm"
-                  onClick={clearImage}
-                  aria-label="Remove image"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
-              <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
-                <ImagePlus size={22} className="text-gray-400" />
-                <span className="text-sm font-medium text-gray-700">Upload a product photo</span>
-                <span className="text-xs text-gray-500">JPG, PNG, or WebP up to 5MB</span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
-            )}
-            {imagePreview && (
-              <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-sm bg-primary-light px-4 py-2 text-sm font-semibold text-primary">
-                <ImagePlus size={16} />
-                Change Photo
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
-            )}
+        {canUploadPhotos && (
+          <div className={labelCls}>
+            <span>Product Photo</span>
+            <div className="flex flex-col gap-3">
+              {imagePreview ? (
+                <div className="relative overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+                  <img src={imagePreview} alt="" className="h-48 w-full object-cover" />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm"
+                    onClick={clearImage}
+                    aria-label="Remove image"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
+                  <ImagePlus size={22} className="text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">Upload a product photo</span>
+                  <span className="text-xs text-gray-500">JPG, PNG, or WebP up to 5MB</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+              )}
+              {imagePreview && (
+                <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-sm bg-primary-light px-4 py-2 text-sm font-semibold text-primary">
+                  <ImagePlus size={16} />
+                  Change Photo
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <label className={labelCls}>Unit Type *
           <select className={selectCls} value={unitType} onChange={(e) => handleUnitTypeChange(e.target.value)}>

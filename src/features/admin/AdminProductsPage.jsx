@@ -5,16 +5,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Edit2, Trash2, ImageIcon, ChevronLeft, X, ImagePlus } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
-import { useAuth, useUserRole, useEditProduct } from '../../lib/hooks'
+import { useAuth, useUserRole, useProducts, useUpdateProduct, useDeleteProduct } from '../../lib/hooks'
 import { EmptyState } from '../../components'
 
 export default function AdminProductsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { isAdmin, isLoading: roleLoading } = useUserRole()
-  const { updateProduct, deleteProduct, isPending } = useEditProduct()
+  const updateProductMutation = useUpdateProduct()
+  const deleteProductMutation = useDeleteProduct()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState(null)
@@ -31,21 +30,11 @@ export default function AdminProductsPage() {
 
   /* ── Queries ──────────────────────────────────────────── */
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ['admin-products', searchQuery],
-    queryFn: async () => {
-      let query = supabase.from('products').select('*')
-
-      if (searchQuery.trim()) {
-        query = query.or(
-          `name.ilike.%${searchQuery}%,barcode.ilike.%${searchQuery}%,brand.ilike.%${searchQuery}%`,
-        )
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false }).limit(50)
-      if (error) throw error
-      return data || []
-    },
+  const { data: products = [], isLoading } = useProducts({
+    search: searchQuery,
+    limit: 50,
+    orderBy: 'created_at',
+    ascending: false
   })
 
   /* ── Handlers ──────────────────────────────────────────── */
@@ -90,12 +79,12 @@ export default function AdminProductsPage() {
   const handleEditSave = async () => {
     try {
       setErrorMsg('')
-      await updateProduct({
+      await updateProductMutation.mutateAsync({
         id: editForm.id,
         name: editForm.name,
         brand: editForm.brand || null,
         barcode: editForm.barcode || null,
-        image_url: editForm.image_url || null,
+        category: editForm.category || null
       })
       setSuccessMsg('Product updated successfully!')
       setEditingId(null)
@@ -112,7 +101,7 @@ export default function AdminProductsPage() {
 
     try {
       setErrorMsg('')
-      await deleteProduct(productId)
+      await deleteProductMutation.mutateAsync(productId)
       setSuccessMsg('Product deleted successfully!')
       setTimeout(() => setSuccessMsg(''), 3000)
     } catch (err) {
@@ -253,14 +242,14 @@ export default function AdminProductsPage() {
                   <div className="flex gap-2 pt-2">
                     <button
                       onClick={handleEditSave}
-                      disabled={isPending}
+                      disabled={updateProductMutation.isPending}
                       className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
                     >
-                      {isPending ? 'Saving...' : 'Save'}
+                      {updateProductMutation.isPending ? 'Saving...' : 'Save'}
                     </button>
                     <button
                       onClick={handleEditCancel}
-                      disabled={isPending}
+                      disabled={updateProductMutation.isPending}
                       className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded hover:bg-gray-300 disabled:opacity-50 transition-colors"
                     >
                       Cancel
@@ -312,7 +301,7 @@ export default function AdminProductsPage() {
                     </button>
                     <button
                       onClick={() => handleDelete(product.id)}
-                      disabled={isPending}
+                      disabled={deleteProductMutation.isPending}
                       className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
                       title="Delete product"
                     >
