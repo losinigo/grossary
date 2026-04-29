@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Edit2, Trash2, ImageIcon, ChevronLeft, X, ImagePlus } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 import { useAuth, useUserRole, useProducts, useUpdateProduct, useDeleteProduct } from '../../lib/hooks'
 import { EmptyState } from '../../components'
 
@@ -23,6 +24,7 @@ export default function AdminProductsPage() {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
 
   useEffect(() => () => {
     if (imagePreview && !editForm.image_url?.includes(imagePreview)) URL.revokeObjectURL(imagePreview)
@@ -43,14 +45,14 @@ export default function AdminProductsPage() {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      setErrorMsg('Please choose an image file.')
+      setUploadError('Please choose an image file.')
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('Image must be 5MB or smaller.')
+      setUploadError('Image must be 5MB or smaller.')
       return
     }
-    setErrorMsg('')
+    setUploadError('')
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
   }
@@ -66,9 +68,10 @@ export default function AdminProductsPage() {
     setEditingId(product.id)
     setEditForm(product)
     setImageFile(null)
-    setImagePreview('')
+    setImagePreview(product.image_url || '')
     setErrorMsg('')
     setSuccessMsg('')
+    setUploadError('')
   }
 
   const handleEditCancel = () => {
@@ -79,18 +82,54 @@ export default function AdminProductsPage() {
   const handleEditSave = async () => {
     try {
       setErrorMsg('')
+      setIsUploading(true)
+      
+      let imageUrl = editForm.image_url
+      let imagePath = null
+      
+      // Upload new image if selected
+      if (imageFile) {
+        const extension = imageFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`
+        imagePath = path
+        
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(path, imageFile, { upsert: false })
+          
+        if (uploadError) {
+          setUploadError(uploadError.message)
+          setIsUploading(false)
+          return
+        }
+        
+        const { data: publicUrlData } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(path)
+        imageUrl = publicUrlData.publicUrl
+      }
+      
       await updateProductMutation.mutateAsync({
         id: editForm.id,
         name: editForm.name,
         brand: editForm.brand || null,
         barcode: editForm.barcode || null,
-        category: editForm.category || null
+        category: editForm.category || null,
+        image_url: imageUrl
       })
+      
       setSuccessMsg('Product updated successfully!')
       setEditingId(null)
+      setIsUploading(false)
       setTimeout(() => setSuccessMsg(''), 3000)
     } catch (err) {
       setErrorMsg(err.message || 'Failed to update product')
+      setIsUploading(false)
+      
+      // Clean up uploaded image if database update failed
+      if (imagePath) {
+        await supabase.storage.from('product-images').remove([imagePath])
+      }
     }
   }
 
@@ -228,28 +267,50 @@ export default function AdminProductsPage() {
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                      Image URL
+                      Product Photo
                     </label>
-                    <input
-                      type="text"
-                      value={editForm.image_url || ''}
-                      onChange={(e) => setEditForm({ ...editForm, image_url: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500"
-                      placeholder="https://..."
-                    />
+                    <div className="flex flex-col gap-3">
+                      {imagePreview ? (
+                        <div className="relative overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+                          <img src={imagePreview} alt={editForm.name} className="h-48 w-full object-contain" />
+                          <label className="absolute left-2 top-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-white/90 text-blue-600 text-xs font-medium rounded-full shadow-sm cursor-pointer hover:bg-blue-100 transition-colors">
+                            <ImagePlus size={14} />
+                            <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                          </label>
+                          <button
+                            type="button"
+                            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm hover:bg-white"
+                            onClick={handleImageDelete}
+                            aria-label="Remove image"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center hover:bg-gray-100 transition-colors">
+                          <ImagePlus size={20} className="text-gray-400" />
+                          <span className="text-sm font-medium text-gray-700">Upload product photo</span>
+                          <span className="text-xs text-gray-500">JPG, PNG, or WebP up to 5MB</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                        </label>
+                      )}
+                      {uploadError && (
+                        <p className="text-sm text-red-600 font-medium">{uploadError}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex gap-2 pt-2">
                     <button
                       onClick={handleEditSave}
-                      disabled={updateProductMutation.isPending}
+                      disabled={updateProductMutation.isPending || isUploading}
                       className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
                     >
-                      {updateProductMutation.isPending ? 'Saving...' : 'Save'}
+                      {updateProductMutation.isPending || isUploading ? 'Saving...' : 'Save'}
                     </button>
                     <button
                       onClick={handleEditCancel}
-                      disabled={updateProductMutation.isPending}
+                      disabled={updateProductMutation.isPending || isUploading}
                       className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded hover:bg-gray-300 disabled:opacity-50 transition-colors"
                     >
                       Cancel

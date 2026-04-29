@@ -201,7 +201,7 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async ({ id, name, brand, barcode, category }) => {
+    mutationFn: async ({ id, name, brand, barcode, category, image_url }) => {
       const { data, error } = await supabase
         .from('products')
         .update({
@@ -209,6 +209,7 @@ export function useUpdateProduct() {
           brand: brand?.trim() || null,
           barcode: barcode?.trim() || null,
           category: category?.trim() || null,
+          image_url: image_url || null,
         })
         .eq('id', id)
         .select()
