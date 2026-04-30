@@ -15,10 +15,6 @@ export default function ProductDetail() {
   const { isAdmin } = useUserRole()
   const { deleteProduct, isPending: isDeleting } = useEditProduct()
 
-  const animationStyle = {
-    animation: 'fadeInUp 0.8s ease-out forwards'
-  }
-
   /* ── Queries ─────────────────────────────────────────────── */
 
   const { data: product, isLoading: productLoading } = useProduct(id)
@@ -54,7 +50,7 @@ export default function ProductDetail() {
   if (!product) return <div className="page"><p>Product not found.</p></div>
 
   return (
-    <div className="page opacity-0" style={animationStyle}>
+    <div className="page">
       <BackButton onClick={() => navigate(-1)} />
 
 
@@ -125,10 +121,64 @@ export default function ProductDetail() {
         </section>
       )}
 
-      {/* Prices at Other Stores — all prices from all stores with Recent Price Changes layout */}
-      {priceHistory && priceHistory.length > 0 && (
+      {/* Current Prices at All Stores */}
+      {currentPrices && currentPrices.length > 1 && (
         <section className="mb-6">
           <SectionTitle>Prices at Other Stores</SectionTitle>
+          <div className="space-y-2">
+            {currentPrices.filter(p => p.is_available).sort((a, b) => a.price - b.price).slice(1).map((price) => {
+              const isMyPrice = price.user_id === user?.id
+              const hasConfirmed = myConfirmations?.[price.id] === true
+              const hasDenied = myConfirmations?.[price.id] === false
+
+              return (
+                <div key={price.id} className="flex items-center bg-white border border-gray-200 rounded-md px-4 py-3 shadow-sm gap-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{price.store?.name}</p>
+                    <p className="text-xs text-gray-500">{price.store?.address}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-[0.95rem] font-bold text-blue-500">₱{price.price.toFixed(2)}</p>
+                    </div>
+                    {!isMyPrice && user && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => confirmMutation.mutate({ priceId: price.id, confirmed: true })}
+                          disabled={confirmMutation.isPending || hasConfirmed || hasDenied}
+                          className={`p-2 rounded-lg transition-colors ${hasConfirmed
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700'
+                            } disabled:opacity-50`}
+                          title="Confirm this price"
+                        >
+                          <Check size={18} />
+                        </button>
+                        <button
+                          onClick={() => confirmMutation.mutate({ priceId: price.id, confirmed: false })}
+                          disabled={confirmMutation.isPending || hasConfirmed || hasDenied}
+                          className={`p-2 rounded-lg transition-colors ${hasDenied
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700'
+                            } disabled:opacity-50`}
+                          title="Deny this price"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Price History */}
+      {priceHistory && priceHistory.length > 0 && (
+        <section className="mb-6">
+          <SectionTitle>Recent Price Changes</SectionTitle>
           <div className="space-y-2">
             {priceHistory.map((entry) => {
               const isMyEntry = entry.user_id === user?.id
@@ -141,11 +191,17 @@ export default function ProductDetail() {
                     <div className="flex items-center gap-2 min-w-0">
                       <MapPin size={11} className="shrink-0" />
                       <span className="font-medium text-sm">{entry.stores?.name || 'Unknown store'}</span>
+                      {/* <Avatar src={entry.profiles?.avatar_url} size={28} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{entry.profiles?.display_name || 'Unknown'}</p>
+                      </div> */}
                     </div>
                     <p className="text-[0.95rem] font-bold text-blue-500 shrink-0 ml-3">₱{entry.price.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                     <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                      {/* <MapPin size={10} className="shrink-0" />
+                      <span className="truncate">{entry.stores?.name || 'Unknown store'}</span> */}
                       <Avatar src={entry.profiles?.avatar_url} size={13} />
                       <div className="min-w-0">
                         <p className="text-xs font-normal text-gray-900 truncate">{entry.profiles?.display_name || 'Unknown'}</p>
@@ -196,8 +252,6 @@ export default function ProductDetail() {
           </div>
         </section>
       )}
-
-      
     </div>
   )
 }
