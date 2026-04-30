@@ -189,18 +189,25 @@ export default function ProductDetail() {
                 <div key={entry.id} className="bg-white border border-gray-200 rounded-md px-4 py-3 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
-                      <Avatar src={entry.profiles?.avatar_url} size={28} />
+                      <MapPin size={11} className="shrink-0" />
+                      <span className="font-medium text-sm">{entry.stores?.name || 'Unknown store'}</span>
+                      {/* <Avatar src={entry.profiles?.avatar_url} size={28} />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{entry.profiles?.display_name || 'Unknown'}</p>
-                      </div>
+                      </div> */}
                     </div>
                     <p className="text-[0.95rem] font-bold text-blue-500 shrink-0 ml-3">₱{entry.price.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                    <div className="flex items-center gap-3 text-xs text-gray-400">
-                      <MapPin size={10} className="shrink-0" />
-                          <span className="truncate">{entry.stores?.name || 'Unknown store'}</span>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                      {/* <MapPin size={10} className="shrink-0" />
+                      <span className="truncate">{entry.stores?.name || 'Unknown store'}</span> */}
+                      <Avatar src={entry.profiles?.avatar_url} size={13} />
+                      <div className="min-w-0">
+                        <p className="text-xs font-normal text-gray-900 truncate">{entry.profiles?.display_name || 'Unknown'}</p>
+                      </div>
                       <span className="flex items-center gap-1"><Clock size={11} />{timeAgo(entry.created_at)}</span>
+
                       {(() => {
                         const confirms = entry.confirmations?.filter(c => c.confirmed).length || 0
                         const denies = entry.confirmations?.filter(c => !c.confirmed).length || 0
@@ -220,7 +227,7 @@ export default function ProductDetail() {
                           className={`p-1.5 rounded-md transition-colors ${hasConfirmed
                             ? 'bg-green-100 text-green-700'
                             : 'bg-gray-100 text-gray-500 hover:bg-green-100 hover:text-green-700'
-                          } disabled:opacity-50`}
+                            } disabled:opacity-50`}
                           title="Confirm this price"
                         >
                           <Check size={14} />
@@ -231,7 +238,7 @@ export default function ProductDetail() {
                           className={`p-1.5 rounded-md transition-colors ${hasDenied
                             ? 'bg-red-100 text-red-700'
                             : 'bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-700'
-                          } disabled:opacity-50`}
+                            } disabled:opacity-50`}
                           title="Deny this price"
                         >
                           <X size={14} />
