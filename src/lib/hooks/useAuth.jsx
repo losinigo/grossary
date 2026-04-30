@@ -14,6 +14,32 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // Sync Google picture to profiles table for existing members
+  const syncGooglePicture = async (authUser) => {
+    if (!authUser) return
+
+    const googlePicture = authUser.user_metadata?.picture
+    if (!googlePicture) return
+
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', authUser.id)
+        .single()
+
+      // Only update if they don't have a picture or if it's different
+      if (!profile?.avatar_url || profile.avatar_url !== googlePicture) {
+        await supabase
+          .from('profiles')
+          .update({ avatar_url: googlePicture })
+          .eq('id', authUser.id)
+      }
+    } catch (err) {
+      console.warn('Failed to sync Google picture:', err.message)
+    }
+  }
+
   useEffect(() => {
     const init = async () => {
       const params = new URLSearchParams(window.location.search)
@@ -25,14 +51,26 @@ export function AuthProvider({ children }) {
       }
 
       const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
+      const authUser = session?.user
+      
+      if (authUser) {
+        await syncGooglePicture(authUser)
+      }
+      
+      setUser(authUser ?? null)
       setLoading(false)
     }
 
     init()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const authUser = session?.user
+      
+      if (authUser) {
+        await syncGooglePicture(authUser)
+      }
+      
+      setUser(authUser ?? null)
     })
 
     return () => subscription.unsubscribe()
